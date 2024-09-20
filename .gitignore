@@ -1,0 +1,35 @@
+# macOS System Files
+.DS_Store
+
+# Xcode
+*.xcworkspace
+*.xcuserdata
+*.xccheckout
+*.xcscmblueprint
+DerivedData/
+.idea/
+
+# Build artifacts
+build/
+*.ipa
+*.app
+
+# Swift Package Manager
+.build/
+Package.resolved
+Packages/
+.swiftpm/
+
+# CocoaPods
+Pods/
+Podfile.lock
+
+# Carthage
+Carthage/Build/
+Carthage/Checkouts/
+
+# Fastlane
+fastlane/report.xml
+fastlane/Preview.html
+fastlane/screenshots
+fastlane/test_output

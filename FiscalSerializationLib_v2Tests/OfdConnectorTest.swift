@@ -21,16 +21,16 @@ class OfdConnectorTests: XCTestCase {
             version: UInt16(202), // версия 2.0.2
             size: 0, // размер будет вычислен позже
             id: UInt32(200775),
-            token: UInt32(46785515),
-            reqNum: UInt16(1)
+            token: UInt32(90599390),
+            reqNum: UInt16(3)
         )
 
         // Сериализация команды CommandInfo
-        let commandSerializer = CommandInfoSerializer()
+        let commandInfo = CommandInfo()
         
         do {
             // Сериализуем команду и получаем Payload
-            let payload = try commandSerializer.serializeCommandInfo()
+            let payload = try commandInfo.serializeCommandInfo()
 
             // Обновляем размер сообщения
             var fullHeader = header
@@ -50,8 +50,11 @@ class OfdConnectorTests: XCTestCase {
             let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverIP, serverPort: serverPort)
 
             // Проверяем ответ от сервера
-            print("Ответ от сервера (hex): \(response.map { String(format: "%02hhx", $0) }.joined())")
+            let messageResponse = try MessageHeader.fromData(response)
+            let deComandInfo = try commandInfo.deserializeCommandInfoResponse(data: response)
             
+            print("Заголовок от сервера:\n \(messageResponse)")
+            print("Payload от сервера:\n \(deComandInfo)")
             // В зависимости от специфики протокола можно добавить больше проверок
             XCTAssert(!response.isEmpty, "Ответ от сервера пустой")
 

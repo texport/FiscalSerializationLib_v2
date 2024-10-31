@@ -26,6 +26,13 @@ struct TicketItem {
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
+    /// Еденица измерения
+    /// Согласно требованиям нужно использовать справочник едениц измерения ЭСФ(я не понимаю зачем...)
+    /// Для удобства я сделал свой собственный, можете выбирать из этого Enum
+    let measureUnitCode: UnitOfMeasurement
+    /// -------------------------------------------------------------------------------------------
+
+    /// -------------------------------------------------------------------------------------------
     /// ЦЕНА ОДНОЙ ЕДЕНИЦЫ ТОВАРА/РАБОТЫ/УСЛУГИ
     /// billsPrice и coinsPrice - это тенге и тиыны
     let billsPrice: UInt64
@@ -69,11 +76,12 @@ struct TicketItem {
     let barcode: String?
     /// -------------------------------------------------------------------------------------------
     
-    init(nameTicketItem: String, sectionCode: String, quantity: UInt32, billsPrice: UInt64, coinsPrice: UInt32, isTicketItemTax: Bool, tax: UInt32?, billsTax: UInt64?, coinsTax: UInt32?, isTicketItemDiscount: Bool, discountName: String?, billsDiscount: UInt64?, coinsDiscount: UInt32?, dataMatrix: String?, barcode: String?) throws {
+    init(nameTicketItem: String, sectionCode: String, quantity: UInt32, measureUnitCode: UnitOfMeasurement, billsPrice: UInt64, coinsPrice: UInt32, isTicketItemTax: Bool, tax: UInt32?, billsTax: UInt64?, coinsTax: UInt32?, isTicketItemDiscount: Bool, discountName: String?, billsDiscount: UInt64?, coinsDiscount: UInt32?, dataMatrix: String?, barcode: String?) throws {
 
         self.nameTicketItem = nameTicketItem
         self.sectionCode = sectionCode
         self.quantity = quantity
+        self.measureUnitCode = measureUnitCode
         self.billsPrice = billsPrice
         self.coinsPrice = coinsPrice
         
@@ -119,5 +127,6 @@ struct TicketItem {
         
         self.dataMatrix = dataMatrix
         self.barcode = barcode
+        
     }
 }

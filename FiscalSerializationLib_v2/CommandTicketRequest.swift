@@ -10,10 +10,14 @@ import Foundation
 
 // Класс-конфигуратор для создания чека
 final class CommandTicketRequest {
+    // Размер заголовка в байтах
+    private let headerSize = 18
+    
     // Основные сущности чека
     private let ticket: Ticket
     private let ticketItems: [TicketItem]
     private var ticketCpcr = Kkm_Proto_TicketRequest()
+    private var ticketServiceRequest: Kkm_Proto_ServiceRequest?
     
     // Сущности приема типов оплаты
     // Наличные деньги
@@ -33,9 +37,10 @@ final class CommandTicketRequest {
     
     // Сущность онлайн чека
     private let isOnline: Bool
+    private let isCustomer: Bool
     
-    var amounts: Kkm_Proto_TicketRequest.Amounts
-    let frShiftNumber: UInt32
+    // Сущность итогов чека
+    private var amounts: Kkm_Proto_TicketRequest.Amounts?
     
     /// Предпочтительный init, желательно работать по этому сценарию
     init(ticket: Ticket, ticketItems: [TicketItem]) throws {
@@ -47,26 +52,48 @@ final class CommandTicketRequest {
             throw NSError(domain: "TicketInitialization", code: 1, userInfo: [NSLocalizedDescriptionKey: "Должен быть выбран хотя бы один способ оплаты: наличные, карта или мобильный платеж."])
         }
         
+        self.isOnline = ticket.isTicketOnline
         self.isCash = ticket.isCash
         self.isCard = ticket.isCard
         self.isMobile = ticket.isMobile
         self.isTaxAllTicket = ticket.isTicketAllTax
         self.isDiscountAllTicket = ticket.isTicketAllDiscount
+        self.isCustomer = ticket.isCustomer
         
         try builderTicket()
     }
     
     private func builderTicket() throws {
-        // Записываем тип операции
+        /// Записываем тип операции
         try self.ticketCpcr.operation = createOperation(type: ticket.operation)
         
-        // Создаем и записываем дату и время
-        let date = try createDate(year: ticket.year, month: ticket.month, day: ticket.day)
-        let time = try createTime(hour: ticket.hour, minute: ticket.minute, second: ticket.second)
-        try self.ticketCpcr.dateTime = createDateTime(date: date, time: time)
+        /// Проверка на отсутствие скидок если возврат
+        if (ticketCpcr.operation.rawValue == 1 && isDiscountAllTicket) || (ticketCpcr.operation.rawValue == 3 && isDiscountAllTicket) {
+            throw NSError(domain: "builderTicket", code: 1, userInfo: [NSLocalizedDescriptionKey: "При операциях возврат покупки или возврат продажи не может быть скидок вообще!!!"])
+        }
+        
+        /// Создаем и записываем дату и время
+        let dateTime = DateTime()
+        let date = try dateTime.createDate(year: ticket.year, month: ticket.month, day: ticket.day)
+        let time = try dateTime.createTime(hour: ticket.hour, minute: ticket.minute, second: ticket.second)
+        try self.ticketCpcr.dateTime = dateTime.createDateTime(date: date, time: time)
+        
+        if !isOnline {
+            // Проверка, что offlineTicketNumber не является nil и больше 0
+            guard let offlineTicketNumber = ticket.offlineTicketNumber, offlineTicketNumber > 0 else {
+                throw NSError(domain: "builderTicket", code: 1, userInfo: [NSLocalizedDescriptionKey: "Для онлайн-чека необходимо указать корректный номер оффлайн чека (offlineTicketNumber), отличающийся от 0."])
+            }
+            
+            ticketCpcr.offlineTicketNumber = offlineTicketNumber
+        }
+
+        // Записываем номер смены
+        ticketCpcr.frShiftNumber = ticket.frShiftNumber
         
         // Записываем кассира
         try ticketCpcr.operator = createOperator(code: ticket.codeOperator, name: ticket.nameOperator)
+        
+        try ticketCpcr.items = bodyBuilder()
         
         // Записываем платежи и их типы
         try ticketCpcr.payments = createPayments()
@@ -77,7 +104,7 @@ final class CommandTicketRequest {
             guard let billsTax = ticket.billsTax,
                   let coinsTax = ticket.coinsTax,
                   let taxPercent = ticket.tax else {
-                throw NSError(domain: "TaxError", code: 14, userInfo: [NSLocalizedDescriptionKey: "Невозможно записать налог на чек. Все значения для налога (billsTax, coinsTax, taxPercent) должны быть установлены."])
+                throw NSError(domain: "builderTicket", code: 14, userInfo: [NSLocalizedDescriptionKey: "Невозможно записать налог на чек. Все значения для налога (billsTax, coinsTax, taxPercent) должны быть установлены."])
             }
             
             // Создаем объект Money на основе проверенных значений
@@ -87,12 +114,83 @@ final class CommandTicketRequest {
             try ticketCpcr.taxes = createTax(percent: taxPercent, sum: moneyTax)
         }
         
-        // Записываем итог чека
-        try ticketCpcr.amounts = createAmounts(payments: ticketCpcr.payments, total: createMoney(bills: ticket.billsTotal, coins: ticket.coinsTotal), taken: self.taken, discount: <#T##Kkm_Proto_TicketRequest.Modifier?#>)
-    }
-    /// Создаем и заполняем список с работами, товарами, услугами
-    private func bodyBuilder() -> [Kkm_Proto_TicketRequest.Item] {
+        try discount = createDiscount()
         
+        // Записываем итог чека
+        try ticketCpcr.amounts = createAmounts(payments: ticketCpcr.payments, total: createMoney(bills: ticket.billsTotal, coins: ticket.coinsTotal), taken: self.taken, discount: discount)
+        
+        if isCustomer {
+            let phone = ticket.phone
+            let email = ticket.email
+            let iinOrBin = ticket.iinOrBin
+
+            if let extensionOptions = try? createExtensionOptions(phone: phone, email: email, iinOrBin: iinOrBin) {
+                ticketCpcr.extensionOptions = extensionOptions
+            } else {
+                throw NSError(domain: "builderTicket", code: 1, userInfo: [NSLocalizedDescriptionKey: "Не удалось создать опции для данных покупателя."])
+            }
+        }
+        
+        ticketServiceRequest = try createServiceRequestBuilder()
+    }
+    
+    /// Создаем и заполняем список с работами, товарами, услугами
+    private func bodyBuilder() throws -> [Kkm_Proto_TicketRequest.Item] {
+        /// Проверка, что массив `ticketItems` не пуст
+        guard ticketItems.count > 0 else {
+            throw NSError(domain: "bodyBuilder", code: 1, userInfo: [NSLocalizedDescriptionKey: "Список товаров и услуг (ticketItems) не может быть пустым."])
+        }
+        
+        var itemsCpcr = [Kkm_Proto_TicketRequest.Item]()
+        
+        for item in ticketItems {
+            var itemCpcr = Kkm_Proto_TicketRequest.Item()
+            
+            let price = try createMoney(bills: item.billsPrice, coins: item.coinsPrice)
+            var itemTaxs: [Kkm_Proto_TicketRequest.Tax] = []
+            
+            /// Проверяем есть ли НДС внутри позиции
+            if item.isTicketItemTax {
+                guard let tax = item.tax, let billsTax = item.billsTax, let coinsTax = item.coinsTax else {
+                    throw NSError(domain: "bodyBuilder", code: 2, userInfo: [NSLocalizedDescriptionKey: "Налог на позицию (isTicketItemTax) указан, но значения tax, billsTax или coinsTax отсутствуют."])
+                }
+                
+                itemTaxs = try createTax(percent: tax, sum: createMoney(bills: billsTax, coins: coinsTax))
+            }
+            
+            /// Проверяем если возврат, то скидок не может быть
+            if (item.isTicketItemDiscount && ticketCpcr.operation.rawValue == 1) || (item.isTicketItemDiscount && ticketCpcr.operation.rawValue == 3) {
+                throw NSError(domain: "bodyBuilder", code: 3, userInfo: [NSLocalizedDescriptionKey: "При операциях возврат покупки или возврат продажи не может быть скидок вообще!!!"])
+            }
+            
+            let itemCommodity = try createItemCommodity(name: item.nameTicketItem, sectionCode: item.sectionCode, quantity: item.quantity, price: price, taxes: itemTaxs, exciseStamp: item.dataMatrix, barcode: item.barcode, measureUnitCode: item.measureUnitCode.rawValue)
+
+            itemCpcr = try createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum.itemTypeCommodity, commodity: itemCommodity)
+            itemsCpcr.append(itemCpcr)
+            
+            /// Если есть скидка на позицию
+            if item.isTicketItemDiscount {
+                guard !isDiscountAllTicket else {
+                    throw NSError(domain: "bodyBuilder", code: 4, userInfo: [NSLocalizedDescriptionKey: "Скидка может быть только на позицию или на весь чек"])
+                }
+                
+                guard let itemDiscountName = item.discountName else {
+                    throw NSError(domain: "bodyBuilder", code: 5, userInfo: [NSLocalizedDescriptionKey: "У скидки обязательно должно быть имя"])
+                }
+                
+                guard let itemBillsDiscount = item.billsDiscount, let itemCoinsDiscount = item.coinsDiscount else {
+                    throw NSError(domain: "bodyBuilder", code: 6, userInfo: [NSLocalizedDescriptionKey: "У скидки обязательно должны быть суммы в billsDiscount и coinsDiscount"])
+                }
+                
+                let itemCpcrDiscount = try createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum.itemTypeDiscount, modifier: createModifier(name: itemDiscountName, sum: createMoney(bills: itemBillsDiscount, coins: itemCoinsDiscount)))
+                
+                itemsCpcr.append(itemCpcrDiscount)
+                
+                /// обязательно обновить счетчик общих скидок в amounts
+            }
+        }
+        
+        return itemsCpcr
     }
     
     // MARK: Operation - создание типа чека
@@ -116,93 +214,6 @@ final class CommandTicketRequest {
         throw NSError(domain: "InvalidOperationType", code: 1, userInfo: [NSLocalizedDescriptionKey: "Недопустимый код типа операции. Допустимые значения: 0 (Покупка), 1 (Возврат покупки), 2 (Продажа), 3 (Возврат продажи)"])
     }
     
-    // MARK: DATETIME - создание сущности дата время
-    private func createDateTime(date: Kkm_Proto_Date, time: Kkm_Proto_Time) throws -> Kkm_Proto_DateTime {
-        var dateTime = Kkm_Proto_DateTime()
-        
-        dateTime.date = date
-        dateTime.time = time
-        
-        return dateTime
-    }
-    
-    private func createDate(year: UInt32, month: UInt32, day: UInt32) throws -> Kkm_Proto_Date {
-        // Получаем текущую дату
-        let currentDate = Date()
-        let calendar = Calendar.current
-        
-        // Проверка на четырехзначный год и допустимый диапазон (не раньше, чем 3 года назад, не позже текущего года)
-        let currentYear = calendar.component(.year, from: currentDate)
-        let earliestYear = currentYear - 3
-        
-        guard (1000...9999).contains(Int(year)) else {
-            throw NSError(domain: "InvalidDate", code: 1, userInfo: [NSLocalizedDescriptionKey: "Год должен быть четырехзначным числом."])
-        }
-        
-        guard (earliestYear...currentYear).contains(Int(year)) else {
-            throw NSError(domain: "InvalidDate", code: 2, userInfo: [NSLocalizedDescriptionKey: "Год должен быть в диапазоне от \(earliestYear) до \(currentYear)."])
-        }
-        
-        // Проверка диапазона месяца
-        guard (1...12).contains(Int(month)) else {
-            throw NSError(domain: "InvalidDate", code: 3, userInfo: [NSLocalizedDescriptionKey: "Месяц должен быть в диапазоне от 1 до 12."])
-        }
-        
-        // Проверка диапазона дня
-        guard (1...31).contains(Int(day)) else {
-            throw NSError(domain: "InvalidDate", code: 4, userInfo: [NSLocalizedDescriptionKey: "День должен быть в диапазоне от 1 до 31."])
-        }
-        
-        // Проверка на корректность даты и не из будущего
-        var dateComponents = DateComponents()
-        dateComponents.year = Int(year)
-        dateComponents.month = Int(month)
-        dateComponents.day = Int(day)
-        
-        guard let date = calendar.date(from: dateComponents) else {
-            throw NSError(domain: "InvalidDate", code: 5, userInfo: [NSLocalizedDescriptionKey: "Дата некорректна. Проверьте правильность дня, месяца и года."])
-        }
-        
-        // Проверка на то, что дата не из будущего
-        guard date <= currentDate else {
-            throw NSError(domain: "InvalidDate", code: 6, userInfo: [NSLocalizedDescriptionKey: "Дата не может быть из будущего."])
-        }
-        
-        // Если все проверки пройдены, создаем объект Kkm_Proto_Date
-        var protoDate = Kkm_Proto_Date()
-        protoDate.year = year
-        protoDate.month = month
-        protoDate.day = day
-        
-        return protoDate
-    }
-    
-    private func createTime(hour: UInt32, minute: UInt32, second: UInt32) throws -> Kkm_Proto_Time {
-        
-        // Проверка диапазона часов
-        guard (0...23).contains(Int(hour)) else {
-            throw NSError(domain: "InvalidTime", code: 1, userInfo: [NSLocalizedDescriptionKey: "Часы должны быть в диапазоне от 0 до 23."])
-        }
-        
-        // Проверка диапазона минут
-        guard (0...59).contains(Int(minute)) else {
-            throw NSError(domain: "InvalidTime", code: 2, userInfo: [NSLocalizedDescriptionKey: "Минуты должны быть в диапазоне от 0 до 59."])
-        }
-        
-        // Проверка диапазона секунд
-        guard (0...59).contains(Int(second)) else {
-            throw NSError(domain: "InvalidTime", code: 3, userInfo: [NSLocalizedDescriptionKey: "Секунды должны быть в диапазоне от 0 до 59."])
-        }
-        
-        // Если все проверки пройдены, создаем объект Kkm_Proto_Time
-        var time = Kkm_Proto_Time()
-        time.hour = hour
-        time.minute = minute
-        time.second = second
-        
-        return time
-    }
-
     // MARK: OPERATOR - создаем кассира
     private func createOperator(code: UInt32, name: String) throws -> Kkm_Proto_Operator {
         // Проверка: код оператора должен быть больше 0
@@ -229,7 +240,7 @@ final class CommandTicketRequest {
     /// так как считаем их legacy от "железных касс" и излишней функцией
     ///
     /// Метод для того что бы создать Item с конкретной позицией товара/услуги/товара
-    func createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum,
+    private func createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum,
                     commodity: Kkm_Proto_TicketRequest.Item.Commodity) throws -> Kkm_Proto_TicketRequest.Item {
         var item = Kkm_Proto_TicketRequest.Item()
         
@@ -244,22 +255,17 @@ final class CommandTicketRequest {
         return item
     }
     
-    /// Метод для того что бы создать скиндку/наценку на конкретный товар/работу/услугу
+    /// Метод для того что бы создать скиндку на конкретный товар/работу/услугу
     /// Нельзя его использовать для пустого ticket, только если в ticket есть товар/работа/услуга
-    func createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum,
-                    commodity: Kkm_Proto_TicketRequest.Item.Commodity,
+    private func createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum,
                     modifier: Kkm_Proto_TicketRequest.Modifier) throws -> Kkm_Proto_TicketRequest.Item {
         // добавить главную проверку, если есть скинда/наценка на весь чек, то этот item нельзя создать
         var item = Kkm_Proto_TicketRequest.Item()
         
-        if type.rawValue == 3 || type.rawValue == 5 {
+        if type.rawValue == 5 {
             item.type = type
         } else {
-            throw NSError(domain: "InvalidItemType", code: 1, userInfo: [NSLocalizedDescriptionKey: "Для скидок type = 5, для наценок type = 3. Цифры указываются без ковычек"])
-        }
-        
-        if type.rawValue == 3 {
-            item.markup = modifier
+            throw NSError(domain: "InvalidItemType", code: 1, userInfo: [NSLocalizedDescriptionKey: "Для скидок type = 5"])
         }
         
         if type.rawValue == 5 {
@@ -271,18 +277,17 @@ final class CommandTicketRequest {
     
     // MARK: ItemCommodity
     /// Метод создает конкретную работу, товар, услугу
-    func createItemCommodity(name: String,
+    private func createItemCommodity(name: String,
                              sectionCode: String,
                              quantity: UInt32,
                              price: Kkm_Proto_Money,
-                             taxes: [Kkm_Proto_TicketRequest.Tax]?,
+                             taxes: [Kkm_Proto_TicketRequest.Tax],
                              exciseStamp: String?,
-                             productId: String?,
                              barcode: String?,
                              measureUnitCode: String) throws -> Kkm_Proto_TicketRequest.Item.Commodity {
         var itemCommodity = Kkm_Proto_TicketRequest.Item.Commodity()
         
-        if (!isTaxAllTicket && taxes == nil) || (isTaxAllTicket && taxes != nil){
+        if (!isTaxAllTicket && taxes.count == 0) || (isTaxAllTicket && taxes.count > 0){
             throw NSError(domain: "InvalidTax", code: 1, userInfo: [NSLocalizedDescriptionKey: "Ошибка с передачей налогов: в чеке может быть либо налог на весь чек, либо налог на каждую позицию. Проверьте корректность входных данных"])
         }
         
@@ -297,20 +302,14 @@ final class CommandTicketRequest {
         itemCommodity.quantity = quantity
         itemCommodity.price = price
         itemCommodity.sum = calculateSum(quantity: quantity, price: price)
-        
-        if let taxes = taxes {
-            itemCommodity.taxes = taxes
-        }
+        itemCommodity.taxes = taxes
         
         if let exciseStamp = exciseStamp {
             itemCommodity.exciseStamp = exciseStamp
         }
         
         // Считаю что physicalLabel использовать вообще не нужно
-        
-        if let productId = productId {
-            itemCommodity.productID = productId
-        }
+        // Считаю что productId использовать вообще не нужно
         
         if let barcode = barcode {
             itemCommodity.barcode = barcode
@@ -323,7 +322,7 @@ final class CommandTicketRequest {
     }
     
     // MARK: Modifier - создание скидки/наценки
-    func createModifier(name: String, sum: Kkm_Proto_Money) throws -> Kkm_Proto_TicketRequest.Modifier {
+    private func createModifier(name: String, sum: Kkm_Proto_Money) throws -> Kkm_Proto_TicketRequest.Modifier {
         var modifier = Kkm_Proto_TicketRequest.Modifier()
         
         modifier.name = name
@@ -476,7 +475,7 @@ final class CommandTicketRequest {
     // MARK: Taxes - НДС
     // Метод создает сущность протокола Kkm_Proto_TicketRequest.Tax для
     // ItemCommodity или TicketRequest
-    func createTax(percent: UInt32, sum: Kkm_Proto_Money) throws -> [Kkm_Proto_TicketRequest.Tax] {
+    private func createTax(percent: UInt32, sum: Kkm_Proto_Money) throws -> [Kkm_Proto_TicketRequest.Tax] {
         
         guard percent == 0 || percent == 12000 else {
             throw NSError(domain: "InvalidTaxPercent", code: 1, userInfo: [NSLocalizedDescriptionKey: "Значение процента должно быть равно 0(0%) или 12000(12%), у нас в стране нет других налоговых ставок"])
@@ -558,30 +557,72 @@ final class CommandTicketRequest {
         return amounts
     }
 
+    // MARK: Discount - создаем и считаем скидки на весь чек
+    private func createDiscount() throws -> Kkm_Proto_TicketRequest.Modifier? {
+        /// Если скидка на весь чек, то пытаемся ее собрать
+        /// обязательно нужно доделать этот метод, после того как сделаю уже позиции в чеке
+        if isDiscountAllTicket {
+            guard let billsDiscount = ticket.billsDiscount, let coinsDiscount = ticket.coinsDiscount else {
+                throw NSError(domain: "DiscountError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Для скидки на весь чек необходимо указать сумму скидки (billsDiscount и coinsDiscount)."])
+            }
+            
+            guard let name = ticket.discountName, !name.trimmingCharacters(in: .whitespaces).isEmpty else {
+                throw NSError(domain: "DiscountError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Название скидки не может быть пустым или состоять только из пробелов."])
+            }
+            
+            return try createModifier(name: name, sum: createMoney(bills: billsDiscount, coins: coinsDiscount))
+        } else {
+            return nil
+        }
+    }
     
     // MARK: Customer - ифнормация о покупателе
     // Метод создает структуру клиента если это необходимо
     private func createExtensionOptions(phone: String?, email: String?, iinOrBin: String?) throws -> Kkm_Proto_TicketRequest.ExtensionOptions? {
-        // Добавить регулярки для iinOrBin, phone, email
-        var customer = Kkm_Proto_TicketRequest.ExtensionOptions()
+        // Проверка, что хотя бы одно из полей передано
+        guard phone != nil || email != nil || iinOrBin != nil else {
+            throw NSError(domain: "ExtensionOptionsError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Необходимо указать хотя бы одно из полей: телефон, email или ИИН/БИН."])
+        }
         
+        var customer = Kkm_Proto_TicketRequest.ExtensionOptions()
         customer.auxiliary = [Kkm_Proto_KeyValuePair]()
         
+        // Регулярное выражение для телефона (Казахстан) - формат +7XXXXXXXXXX
+        let phoneRegex = "^\\+7\\d{10}$"
+        let phonePredicate = NSPredicate(format: "SELF MATCHES %@", phoneRegex)
+        
         if let phone = phone {
+            guard phonePredicate.evaluate(with: phone) else {
+                throw NSError(domain: "ExtensionOptionsError", code: 2, userInfo: [NSLocalizedDescriptionKey: "Неверный формат телефона. Ожидается формат +7XXXXXXXXXX."])
+            }
             customer.customerPhone = phone
         }
         
+        // Регулярное выражение для email
+        let emailRegex = "^[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$"
+        let emailPredicate = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        
         if let email = email {
+            guard emailPredicate.evaluate(with: email) else {
+                throw NSError(domain: "ExtensionOptionsError", code: 3, userInfo: [NSLocalizedDescriptionKey: "Неверный формат email."])
+            }
             customer.customerEmail = email
         }
         
+        // Проверка ИИН/БИН - должно содержать только цифры и быть длиной 12 символов
+        let iinOrBinRegex = "^\\d{12}$"
+        let iinOrBinPredicate = NSPredicate(format: "SELF MATCHES %@", iinOrBinRegex)
+        
         if let iinOrBin = iinOrBin {
+            guard iinOrBinPredicate.evaluate(with: iinOrBin) else {
+                throw NSError(domain: "ExtensionOptionsError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Неверный формат ИИН/БИН. Ожидается 12-значное число, содержащее только цифры."])
+            }
             customer.customerIinOrBin = iinOrBin
         }
         
         return customer
     }
-    
+
     // MARK: MONEY
     private func createMoney(bills: UInt64, coins: UInt32) throws -> Kkm_Proto_Money {
         var money = Kkm_Proto_Money()
@@ -592,7 +633,51 @@ final class CommandTicketRequest {
         return money
     }
     
+    // MARK: SERVICE REQUEST
+    /// Метод отвечает за создание сервисной части для чека
+    private func createServiceRequestBuilder() throws -> Kkm_Proto_ServiceRequest {
+        var serviceRequestBuilder: ServiceRequestBuilder?
+        
+        let dateTime = DateTime()
+        
+        // Извлекаем значения безопасно с использованием значений по умолчанию
+        let offlinePeriodBeginYear = ticket.offlinePeriodBeginYear ?? 0
+        let offlinePeriodBeginMonth = ticket.offlinePeriodBeginMonth ?? 0
+        let offlinePeriodBeginDay = ticket.offlinePeriodBeginDay ?? 0
+        let offlinePeriodBeginHour = ticket.offlinePeriodBeginHour ?? 0
+        let offlinePeriodBeginMinute = ticket.offlinePeriodBeginMinute ?? 0
+        let offlinePeriodBeginSecond = ticket.offlinePeriodBeginSecond ?? 0
+
+        let offlinePeriodEndYear = ticket.offlinePeriodEndYear ?? 0
+        let offlinePeriodEndMonth = ticket.offlinePeriodEndMonth ?? 0
+        let offlinePeriodEndDay = ticket.offlinePeriodEndDay ?? 0
+        let offlinePeriodEndHour = ticket.offlinePeriodEndHour ?? 0
+        let offlinePeriodEndMinute = ticket.offlinePeriodEndMinute ?? 0
+        let offlinePeriodEndSecond = ticket.offlinePeriodEndSecond ?? 0
+
+        // Создаем даты и время для оффлайн периода
+        let offlinePeriodBeginDate = try dateTime.createDate(year: offlinePeriodBeginYear, month: offlinePeriodBeginMonth, day: offlinePeriodBeginDay)
+        let offlinePeriodBeginTime = try dateTime.createTime(hour: offlinePeriodBeginHour, minute: offlinePeriodBeginMinute, second: offlinePeriodBeginSecond)
+        let offlinePeriodBegin = try dateTime.createDateTime(date: offlinePeriodBeginDate, time: offlinePeriodBeginTime)
+
+        let offlinePeriodEndDate = try dateTime.createDate(year: offlinePeriodEndYear, month: offlinePeriodEndMonth, day: offlinePeriodEndDay)
+        let offlinePeriodEndTime = try dateTime.createTime(hour: offlinePeriodEndHour, minute: offlinePeriodEndMinute, second: offlinePeriodEndSecond)
+        let offlinePeriodEnd = try dateTime.createDateTime(date: offlinePeriodEndDate, time: offlinePeriodEndTime)
+        
+        serviceRequestBuilder = ServiceRequestBuilder(kgdId: ticket.kgdId, kkmOfdId: ticket.kkmOfdId, kkmSerialNumber: ticket.kkmSerialNumber, title: ticket.title, address: ticket.address, iinOrBin: ticket.iinOrBinOrg, oked: ticket.oked, isOnline: ticket.isTicketOnline, offlinePeriodBegin: offlinePeriodBegin, offlinePeriodEnd: offlinePeriodEnd, getRegInfo: true)
+        
+        // Безопасно извлекаем serviceRequest
+        guard let serviceRequest = serviceRequestBuilder?.serviceRequest else {
+            throw NSError(domain: "ServiceRequestBuilderError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Не удалось создать serviceRequest."])
+        }
+
+        return serviceRequest
+    }
+    
     // MARK: Методы Хелперы
+    
+    /// Нужно обязательно сделать проверку на то что quantity передается в тысячных
+    
     // Проверка параметра Name для Commodity
     private func isValidName(_ name: String) -> Bool {
         // Регулярное выражение для проверки: строка не должна быть пустой, содержать только пробелы или состоять из одного символа
@@ -601,25 +686,58 @@ final class CommandTicketRequest {
         return predicate.evaluate(with: name)
     }
     
-    // Метод для вычисления суммы на основе количества и цены для Commodity
+    // Метод для вычисления суммы на основе количества в тысячных и цены
     private func calculateSum(quantity: UInt32, price: Kkm_Proto_Money) -> Kkm_Proto_Money {
         var total = Kkm_Proto_Money()
-        
-        // Умножаем количество на основные денежные единицы (bills) и разменные единицы (coins)
-        total.bills = price.bills * UInt64(quantity)
-        total.coins = price.coins * quantity
-        
-        // Если coins больше 100 (или эквивалент для копеек), конвертируем в bills
+
+        // Вычисляем общую сумму с учетом того, что quantity уже в тысячных
+        total.bills = (price.bills * UInt64(quantity)) / 1000
+        total.coins = (price.coins * quantity) / 1000
+
+        // Если coins больше 100, конвертируем их в bills
         if total.coins >= 100 {
             total.bills += UInt64(total.coins / 100)
             total.coins = total.coins % 100
         }
-        
+
         return total
     }
 
     // Метод проверяет что Tax.sum != 0
     private func checkSum(money: Kkm_Proto_Money) -> Bool {
         (money.bills != 0 && money.coins != 0) || (money.bills != 0 && money.coins == 0) || (money.bills == 0 && money.coins != 0)
+    }
+    
+    // MARK: ПУБЛИЧНЫЕ МЕТОДЫ
+    func serializeCommandTicketRequest() throws -> Data {
+        var request = Kkm_Proto_Request()
+        request.command = .commandTicket
+        request.ticket = ticketCpcr
+        
+        if let ticketRequestCpcr = ticketServiceRequest {
+            request.service = ticketRequestCpcr
+        } else {
+            throw NSError(domain: "serializeCommandTicketRequest", code: 1, userInfo: [NSLocalizedDescriptionKey: "Что-то с ticketRequestCpcr, не получилось его извлечь."])
+        }
+        
+        let payload = try request.serializedData()
+        
+        return payload
+    }
+    
+    func deserializeCommandTicketResponse(data: Data) throws -> Kkm_Proto_Response {
+        // Проверяем, что данных достаточно для включения заголовка
+        guard data.count > headerSize else {
+            throw NSError(domain: "CommandTicketDeserializer", code: 2, userInfo: [NSLocalizedDescriptionKey: "Данных недостаточно"])
+        }
+        
+        // Отсекаем заголовок
+        let payloadData = data.subdata(in: headerSize..<data.count)
+        
+        // Десериализация данных
+        let response = try Kkm_Proto_Response(serializedBytes: payloadData)
+        
+        // Возвращаем десериализованный ответ
+        return response
     }
 }

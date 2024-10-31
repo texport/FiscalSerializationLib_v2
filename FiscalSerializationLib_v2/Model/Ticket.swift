@@ -12,6 +12,41 @@ struct Ticket {
     /// то ставим False. Обязательно вы должны генерировать Оффлайн фискальный признак
     let isTicketOnline: Bool
     let offlineTicketNumber: UInt32?
+    
+    let offlinePeriodBeginYear: UInt32?
+    let offlinePeriodBeginMonth: UInt32?
+    let offlinePeriodBeginDay: UInt32?
+    
+    let offlinePeriodBeginHour: UInt32?
+    let offlinePeriodBeginMinute: UInt32?
+    let offlinePeriodBeginSecond: UInt32?
+    
+    let offlinePeriodEndYear: UInt32?
+    let offlinePeriodEndMonth: UInt32?
+    let offlinePeriodEndDay: UInt32?
+    
+    let offlinePeriodEndHour: UInt32?
+    let offlinePeriodEndMinute: UInt32?
+    let offlinePeriodEndSecond: UInt32?
+    /// -------------------------------------------------------------------------------------------
+    
+    /// -------------------------------------------------------------------------------------------
+    /// Информация о владельце кассового аппарата и о самом кассовом аппарате
+    /// kgdId - регистрационный номер, который выдает КГД при регистрации кассового аппарата
+    /// kkmOfdId - системный идентификатор, который выдает ОФД при регистрации у них на сайте
+    /// kkmSerialNumber - заводской номер кассового аппарата, который маркируется на кассовом аппарате при его производстве
+    /// title - имя компании владельца кассового аппарата
+    /// address - юридический адрес компании владельца кассового аппарата
+    /// iinOrBinOrg - ИИН или БИН компании владельца кассового аппарата
+    /// oked - общий классификатор экономической деятельности компании владельца кассового аппарата
+    let kgdId: String
+    let kkmOfdId: String
+    let kkmSerialNumber: String
+    
+    let title: String
+    let address: String
+    let iinOrBinOrg: String
+    let oked: String
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
@@ -129,6 +164,25 @@ struct Ticket {
     
     init(isTicketOnline: Bool,
          offlineTicketNumber: UInt32?,
+         offlinePeriodBeginYear: UInt32?,
+         offlinePeriodBeginMonth: UInt32?,
+         offlinePeriodBeginDay: UInt32?,
+         offlinePeriodBeginHour: UInt32?,
+         offlinePeriodBeginMinute: UInt32?,
+         offlinePeriodBeginSecond: UInt32?,
+         offlinePeriodEndYear: UInt32?,
+         offlinePeriodEndMonth: UInt32?,
+         offlinePeriodEndDay: UInt32?,
+         offlinePeriodEndHour: UInt32?,
+         offlinePeriodEndMinute: UInt32?,
+         offlinePeriodEndSecond: UInt32?,
+         kgdId: String,
+         kkmOfdId: String,
+         kkmSerialNumber: String,
+         title: String,
+         address: String,
+         iinOrBinOrg: String,
+         oked: String,
          frShiftNumber: UInt32,
          operation: UInt, year: UInt32, month: UInt32, day: UInt32, hour: UInt32, minute: UInt32, second: UInt32,
          codeOperator: UInt32, nameOperator: String,
@@ -141,16 +195,60 @@ struct Ticket {
         
         self.isTicketOnline = isTicketOnline
         
-        // Проверка: если чек не в онлайн режиме, должен быть указан offlineTicketNumber
+        // Проверка: если чек в оффлайн(автономномном) режиме, должен быть указан offlineTicketNumber
         if !isTicketOnline {
             guard let offlineNumber = offlineTicketNumber else {
                 throw NSError(domain: "TicketInitialization", code: 1, userInfo: [NSLocalizedDescriptionKey: "Для оффлайн чека необходимо указать offlineTicketNumber"])
             }
+            
+            guard let offlinePeriodBeginYear = offlinePeriodBeginYear, let offlinePeriodBeginMonth = offlinePeriodBeginMonth, let offlinePeriodBeginDay = offlinePeriodBeginDay, let offlinePeriodBeginHour = offlinePeriodBeginHour, let offlinePeriodBeginMinute = offlinePeriodBeginMinute, let offlinePeriodBeginSecond = offlinePeriodBeginSecond else {
+                throw NSError(domain: "TicketInitialization", code: 2, userInfo: [NSLocalizedDescriptionKey: "Для оффлайн чека необходимо заполнить все переменные начала оффлайн(автономного) режима offlinePeriodBegin"])
+            }
+            
+            guard let offlinePeriodEndYear = offlinePeriodEndYear, let offlinePeriodEndMonth = offlinePeriodEndMonth, let offlinePeriodEndDay = offlinePeriodEndDay, let offlinePeriodEndHour = offlinePeriodEndHour, let offlinePeriodEndMinute = offlinePeriodEndMinute, let offlinePeriodEndSecond = offlinePeriodEndSecond else {
+                throw NSError(domain: "TicketInitialization", code: 3, userInfo: [NSLocalizedDescriptionKey: "Для оффлайн чека необходимо заполнить все переменные завершения оффлайн(автономного) режима offlinePeriodEnd"])
+            }
+            
             self.offlineTicketNumber = offlineNumber
+            
+            self.offlinePeriodBeginYear = offlinePeriodBeginYear
+            self.offlinePeriodBeginMonth = offlinePeriodBeginMonth
+            self.offlinePeriodBeginDay = offlinePeriodBeginDay
+            self.offlinePeriodBeginHour = offlinePeriodBeginHour
+            self.offlinePeriodBeginMinute = offlinePeriodBeginMinute
+            self.offlinePeriodBeginSecond = offlinePeriodBeginSecond
+
+            self.offlinePeriodEndYear = offlinePeriodEndYear
+            self.offlinePeriodEndMonth = offlinePeriodEndMonth
+            self.offlinePeriodEndDay = offlinePeriodEndDay
+            self.offlinePeriodEndHour = offlinePeriodEndHour
+            self.offlinePeriodEndMinute = offlinePeriodEndMinute
+            self.offlinePeriodEndSecond = offlinePeriodEndSecond
         } else {
             self.offlineTicketNumber = nil
+            
+            self.offlinePeriodBeginYear = 0
+            self.offlinePeriodBeginMonth = 0
+            self.offlinePeriodBeginDay = 0
+            self.offlinePeriodBeginHour = 0
+            self.offlinePeriodBeginMinute = 0
+            self.offlinePeriodBeginSecond = 0
+            
+            self.offlinePeriodEndYear = 0
+            self.offlinePeriodEndMonth = 0
+            self.offlinePeriodEndDay = 0
+            self.offlinePeriodEndHour = 0
+            self.offlinePeriodEndMinute = 0
+            self.offlinePeriodEndSecond = 0
         }
-
+        
+        self.kgdId = kgdId
+        self.kkmOfdId = kkmOfdId
+        self.kkmSerialNumber = kkmSerialNumber
+        self.title = title
+        self.address = address
+        self.iinOrBinOrg = iinOrBinOrg
+        self.oked = oked
         self.frShiftNumber = frShiftNumber
         self.operation = operation
         self.year = year
@@ -236,7 +334,7 @@ struct Ticket {
             self.billsTax = nil
             self.coinsTax = nil
         }
-
+        
         self.isTicketAllDiscount = isTicketAllDiscount
         // Проверка: если скидка на весь чек (isTicketAllDiscount)
         if isTicketAllDiscount {
@@ -256,7 +354,7 @@ struct Ticket {
             self.billsDiscount = nil
             self.coinsDiscount = nil
         }
-
+        
         self.billsTotal = billsTotal
         self.coinsTotal = coinsTotal
         

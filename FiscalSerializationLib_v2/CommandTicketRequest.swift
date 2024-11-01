@@ -664,7 +664,7 @@ final class CommandTicketRequest {
         let offlinePeriodEndTime = try dateTime.createTime(hour: offlinePeriodEndHour, minute: offlinePeriodEndMinute, second: offlinePeriodEndSecond)
         let offlinePeriodEnd = try dateTime.createDateTime(date: offlinePeriodEndDate, time: offlinePeriodEndTime)
         
-        serviceRequestBuilder = ServiceRequestBuilder(kgdId: ticket.kgdId, kkmOfdId: ticket.kkmOfdId, kkmSerialNumber: ticket.kkmSerialNumber, title: ticket.title, address: ticket.address, iinOrBin: ticket.iinOrBinOrg, oked: ticket.oked, isOnline: ticket.isTicketOnline, offlinePeriodBegin: offlinePeriodBegin, offlinePeriodEnd: offlinePeriodEnd, getRegInfo: true)
+        serviceRequestBuilder = try ServiceRequestBuilder(kgdId: ticket.kgdId, kkmOfdId: ticket.kkmOfdId, kkmSerialNumber: ticket.kkmSerialNumber, title: ticket.title, address: ticket.address, iinOrBin: ticket.iinOrBinOrg, oked: ticket.oked, isOnline: ticket.isTicketOnline, offlinePeriodBegin: offlinePeriodBegin, offlinePeriodEnd: offlinePeriodEnd, getRegInfo: true)
         
         // Безопасно извлекаем serviceRequest
         guard let serviceRequest = serviceRequestBuilder?.serviceRequest else {

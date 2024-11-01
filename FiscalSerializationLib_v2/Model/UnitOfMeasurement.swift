@@ -5,6 +5,8 @@
 //  Created by Sergey Ivanov on 31.10.2024.
 //
 
+import Foundation
+
 enum UnitOfMeasurement: String {
     case piece = "796"
     case kilogram = "116"

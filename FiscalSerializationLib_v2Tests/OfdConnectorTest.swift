@@ -20,8 +20,8 @@ class OfdConnectorTests: XCTestCase {
         version: UInt16(202), // версия 2.0.2
         size: 0, // размер будет вычислен позже
         id: UInt32(200956),
-        token: UInt32(1429583586),
-        reqNum: UInt16(2)
+        token: UInt32(257152748),
+        reqNum: UInt16(3)
     )
     
     func testSendCommandInfoToOfd() {
@@ -69,7 +69,7 @@ class OfdConnectorTests: XCTestCase {
         var ticketCpcr: CommandTicketRequest?
         
         do {
-            ticket = try Ticket(isTicketOnline: true, offlineTicketNumber: nil, offlinePeriodBeginYear: nil, offlinePeriodBeginMonth: nil, offlinePeriodBeginDay: nil, offlinePeriodBeginHour: nil, offlinePeriodBeginMinute: nil, offlinePeriodBeginSecond: nil, offlinePeriodEndYear: nil, offlinePeriodEndMonth: nil, offlinePeriodEndDay: nil, offlinePeriodEndHour: nil, offlinePeriodEndMinute: nil, offlinePeriodEndSecond: nil, kgdId: "381928371231", kkmOfdId: "200956", kkmSerialNumber: "141412323", title: "ИП МИЧКА ПАВЕЛ АНДРЕЕВИЧ", address: "г. Астана, ул. Ленина 33", iinOrBinOrg: "960624350642", oked: "7281", frShiftNumber: 1, operation: 2, year: 2024, month: 10, day: 31, hour: 23, minute: 0, second: 0, codeOperator: 1, nameOperator: "Сергей", isCash: true, billsCashSum: 1000, coinsCashSum: 0, billsCashTaken: 5000, coinsCashTaken: 0, isCard: false, billsCardSum: nil, coinsCardSum: nil, isMobile: false, billsMobileSum: nil, coinsMobileSum: nil, isTicketAllTax: true, tax: 12000, billsTax: 120, coinsTax: 0, isTicketAllDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil, billsTotal: 1000, coinsTotal: 0, isCustomer: false, iinOrBin: nil, phone: nil, email: nil)
+            ticket = try Ticket(isTicketOnline: true, offlineTicketNumber: nil, offlinePeriodBeginYear: nil, offlinePeriodBeginMonth: nil, offlinePeriodBeginDay: nil, offlinePeriodBeginHour: nil, offlinePeriodBeginMinute: nil, offlinePeriodBeginSecond: nil, offlinePeriodEndYear: nil, offlinePeriodEndMonth: nil, offlinePeriodEndDay: nil, offlinePeriodEndHour: nil, offlinePeriodEndMinute: nil, offlinePeriodEndSecond: nil, kgdId: "381928371231", kkmOfdId: "200956", kkmSerialNumber: "141412323", title: "ИП МИЧКА ПАВЕЛ АНДРЕЕВИЧ", address: "г. Астана, ул. Ленина 33", iinOrBinOrg: "960624350642", oked: "7281", frShiftNumber: 1, operation: 3, year: 2024, month: 10, day: 31, hour: 23, minute: 0, second: 0, codeOperator: 1, nameOperator: "Александр Выдрин", isCash: true, billsCashSum: 1000, coinsCashSum: 0, billsCashTaken: 5000, coinsCashTaken: 0, isCard: false, billsCardSum: nil, coinsCardSum: nil, isMobile: false, billsMobileSum: nil, coinsMobileSum: nil, isTicketAllTax: true, tax: 12000, billsTax: 120, coinsTax: 0, isTicketAllDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil, billsTotal: 1000, coinsTotal: 0, isCustomer: false, iinOrBin: nil, phone: nil, email: nil)
         } catch {
             XCTFail("Ошибка при создании Ticket: \(error)")
         }

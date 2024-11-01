@@ -5,7 +5,10 @@
 //  Created by Sergey Ivanov on 31.10.2024.
 //
 
-/// Этот класс отвечает за создание сервисной части для любого чека/отчета
+import Foundation
+
+/// - ServiceRequestBuilder - этот класс отвечает за создание сервисной части для любого чека/отчета.
+/// Вам его использовать не нужно, он автоматически будет использоваться в тех местах, где это действительно необходимо
 final class ServiceRequestBuilder {
     private let ticketAdInfos: [Kkm_Proto_TicketAdInfo] = []
     private let auxiliary: [Kkm_Proto_KeyValuePair] = []
@@ -24,14 +27,13 @@ final class ServiceRequestBuilder {
     private let offlinePeriodEnd: Kkm_Proto_DateTime
     private let getRegInfo: Bool
     
-    // Приватное изменяемое свойство
     private var _serviceRequest: Kkm_Proto_ServiceRequest?
     
     var serviceRequest: Kkm_Proto_ServiceRequest? {
         return _serviceRequest
     }
     
-    init(kgdId: String, kkmOfdId: String, kkmSerialNumber: String, title: String, address: String, iinOrBin: String, oked: String, isOnline: Bool, offlinePeriodBegin: Kkm_Proto_DateTime, offlinePeriodEnd: Kkm_Proto_DateTime, getRegInfo: Bool) {
+    init(kgdId: String, kkmOfdId: String, kkmSerialNumber: String, title: String, address: String, iinOrBin: String, oked: String, isOnline: Bool, offlinePeriodBegin: Kkm_Proto_DateTime, offlinePeriodEnd: Kkm_Proto_DateTime, getRegInfo: Bool) throws {
         self.kgdId = kgdId
         self.kkmOfdId = kkmOfdId
         self.kkmSerialNumber = kkmSerialNumber
@@ -44,7 +46,6 @@ final class ServiceRequestBuilder {
         self.offlinePeriodEnd = offlinePeriodEnd
         self.getRegInfo = getRegInfo
         
-        // Обрабатываем ошибку при создании serviceRequest
         do {
             self._serviceRequest = try createServiceRequestCpcr()
         } catch {
@@ -88,8 +89,8 @@ final class ServiceRequestBuilder {
         return kkmRegInfo
     }
     
-    /// Метод создает сущность протокола Kkm_Proto_OrgRegInfo
-    /// Возможно нужно будет добавить наполнение этой информацией из CommandInfo
+    /// - createOrgRegInfo - метод создает сущность протокола CPCR Kkm_Proto_OrgRegInfo
+    // TODO: Добавить возможность автозаполнение сервисной части из команды CommandInfo
     private func createOrgRegInfo(title: String, address: String, iinOrBin: String, oked: String) throws -> Kkm_Proto_OrgRegInfo {
         var orgRegInfo = Kkm_Proto_OrgRegInfo()
         

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1C2A60F82C9D7E7C009F0B00 /* FiscalSerializationLib_v2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1C2A60ED2C9D7E7C009F0B00 /* FiscalSerializationLib_v2.framework */; };
+		1CD4262C2C9D9D09001DEEEA /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 1CD4262B2C9D9D09001DEEEA /* SwiftProtobuf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -56,6 +57,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1CD4262C2C9D9D09001DEEEA /* SwiftProtobuf in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -119,6 +121,7 @@
 			);
 			name = FiscalSerializationLib_v2;
 			packageProductDependencies = (
+				1CD4262B2C9D9D09001DEEEA /* SwiftProtobuf */,
 			);
 			productName = FiscalSerializationLib_v2;
 			productReference = 1C2A60ED2C9D7E7C009F0B00 /* FiscalSerializationLib_v2.framework */;
@@ -174,6 +177,9 @@
 			);
 			mainGroup = 1C2A60E32C9D7E7C009F0B00;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				1CD4262A2C9D9D09001DEEEA /* XCRemoteSwiftPackageReference "swift-protobuf" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 1C2A60EE2C9D7E7C009F0B00 /* Products */;
 			projectDirPath = "";
@@ -507,6 +513,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		1CD4262A2C9D9D09001DEEEA /* XCRemoteSwiftPackageReference "swift-protobuf" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/apple/swift-protobuf.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.28.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		1CD4262B2C9D9D09001DEEEA /* SwiftProtobuf */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 1CD4262A2C9D9D09001DEEEA /* XCRemoteSwiftPackageReference "swift-protobuf" */;
+			productName = SwiftProtobuf;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = 1C2A60E42C9D7E7C009F0B00 /* Project object */;
 }

@@ -20,8 +20,8 @@ class OfdConnectorTests: XCTestCase {
         version: UInt16(202), // версия 2.0.2
         size: 0, // размер будет вычислен позже
         id: UInt32(200956),
-        token: UInt32(257152748),
-        reqNum: UInt16(3)
+        token: UInt32(2704817126),
+        reqNum: UInt16(14)
     )
     
     func testSendCommandInfoToOfd() {
@@ -69,13 +69,31 @@ class OfdConnectorTests: XCTestCase {
         var ticketCpcr: CommandTicketRequest?
         
         do {
-            ticket = try Ticket(isTicketOnline: true, offlineTicketNumber: nil, offlinePeriodBeginYear: nil, offlinePeriodBeginMonth: nil, offlinePeriodBeginDay: nil, offlinePeriodBeginHour: nil, offlinePeriodBeginMinute: nil, offlinePeriodBeginSecond: nil, offlinePeriodEndYear: nil, offlinePeriodEndMonth: nil, offlinePeriodEndDay: nil, offlinePeriodEndHour: nil, offlinePeriodEndMinute: nil, offlinePeriodEndSecond: nil, kgdId: "381928371231", kkmOfdId: "200956", kkmSerialNumber: "141412323", title: "ИП МИЧКА ПАВЕЛ АНДРЕЕВИЧ", address: "г. Астана, ул. Ленина 33", iinOrBinOrg: "960624350642", oked: "7281", frShiftNumber: 1, operation: 3, year: 2024, month: 10, day: 31, hour: 23, minute: 0, second: 0, codeOperator: 1, nameOperator: "Александр Выдрин", isCash: true, billsCashSum: 1000, coinsCashSum: 0, billsCashTaken: 5000, coinsCashTaken: 0, isCard: false, billsCardSum: nil, coinsCardSum: nil, isMobile: false, billsMobileSum: nil, coinsMobileSum: nil, isTicketAllTax: true, tax: 12000, billsTax: 120, coinsTax: 0, isTicketAllDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil, billsTotal: 1000, coinsTotal: 0, isCustomer: false, iinOrBin: nil, phone: nil, email: nil)
+            ticket = try Ticket(isTicketOnline: true, offlineTicketNumber: nil,
+                                offlinePeriodBeginYear: nil, offlinePeriodBeginMonth: nil, offlinePeriodBeginDay: nil, offlinePeriodBeginHour: nil, offlinePeriodBeginMinute: nil, offlinePeriodBeginSecond: nil,
+                                offlinePeriodEndYear: nil, offlinePeriodEndMonth: nil, offlinePeriodEndDay: nil, offlinePeriodEndHour: nil, offlinePeriodEndMinute: nil, offlinePeriodEndSecond: nil,
+                                kgdId: "381928371231", kkmOfdId: "200956", kkmSerialNumber: "141412323", title: "ИП МИЧКА ПАВЕЛ АНДРЕЕВИЧ", address: "г. Астана, ул. Ленина 33", iinOrBinOrg: "960624350642", oked: "7281",
+                                frShiftNumber: 1,
+                                operation: 2,
+                                year: 2024, month: 10, day: 31, hour: 23, minute: 0, second: 0,
+                                codeOperator: 1, nameOperator: "Сергей Иванов",
+                                isCash: true, billsCashSum: 1000, coinsCashSum: 0, billsCashTaken: 1000, coinsCashTaken: 0,
+                                isCard: true, billsCardSum: 500, coinsCardSum: 0,
+                                isMobile: true, billsMobileSum: 404, coinsMobileSum: 0,
+                                isTicketAllTax: true, tax: 12000, billsTax: 204, coinsTax: 0,
+                                isTicketAllDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil,
+                                billsTotal: 1904, coinsTotal: 0,
+                                isCustomer: true, iinOrBin: "123456789123", phone: "+77777777777", email: "mail@mail.kz")
         } catch {
             XCTFail("Ошибка при создании Ticket: \(error)")
         }
         
         do {
-            ticketItem1 = try TicketItem(nameTicketItem: "Самагон", sectionCode: "1", quantity: 1000, measureUnitCode: .piece, billsPrice: 1000, coinsPrice: 0, isTicketItemTax: false, tax: nil, billsTax: nil, coinsTax: nil, isTicketItemDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil, dataMatrix: nil, barcode: nil)
+            ticketItem1 = try TicketItem(nameTicketItem: "Самагон", sectionCode: "1", quantity: 1000, measureUnitCode: .piece,
+                                         billsPrice: 1904, coinsPrice: 0,
+                                         isTicketItemTax: false, tax: nil, billsTax: nil, coinsTax: nil,
+                                         isTicketItemDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil,
+                                         dataMatrix: nil, barcode: "123456789")
         } catch {
             XCTFail("Ошибка при создании ticketItem1: \(error)")
         }
@@ -124,7 +142,7 @@ class OfdConnectorTests: XCTestCase {
                 // В зависимости от специфики протокола можно добавить больше проверок
                 XCTAssert(!response.isEmpty, "Ответ от сервера пустой")
             } else {
-                XCTFail("TicketCpct не удалось извлечь.")
+                XCTFail("TicketCpcr не удалось извлечь.")
             }
         } catch {
             XCTFail("Ошибка при отправке данных в ОФД: \(error)")

@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		1C2A60F82C9D7E7C009F0B00 /* FiscalSerializationLib_v2.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1C2A60ED2C9D7E7C009F0B00 /* FiscalSerializationLib_v2.framework */; };
+		1C65CE7A2CD74DE70034AF6C /* Package.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1C65CE792CD74DDB0034AF6C /* Package.swift */; };
 		1CD4262C2C9D9D09001DEEEA /* SwiftProtobuf in Frameworks */ = {isa = PBXBuildFile; productRef = 1CD4262B2C9D9D09001DEEEA /* SwiftProtobuf */; };
 /* End PBXBuildFile section */
 
@@ -24,6 +25,7 @@
 /* Begin PBXFileReference section */
 		1C2A60ED2C9D7E7C009F0B00 /* FiscalSerializationLib_v2.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = FiscalSerializationLib_v2.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1C2A60F72C9D7E7C009F0B00 /* FiscalSerializationLib_v2Tests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FiscalSerializationLib_v2Tests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		1C65CE792CD74DDB0034AF6C /* Package.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Package.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -75,6 +77,7 @@
 		1C2A60E32C9D7E7C009F0B00 = {
 			isa = PBXGroup;
 			children = (
+				1C65CE792CD74DDB0034AF6C /* Package.swift */,
 				1C2A60EF2C9D7E7C009F0B00 /* FiscalSerializationLib_v2 */,
 				1C2A60FB2C9D7E7C009F0B00 /* FiscalSerializationLib_v2Tests */,
 				1C2A60EE2C9D7E7C009F0B00 /* Products */,
@@ -213,6 +216,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1C65CE7A2CD74DE70034AF6C /* Package.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

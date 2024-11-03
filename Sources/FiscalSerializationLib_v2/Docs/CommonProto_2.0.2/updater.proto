@@ -1,0 +1,57 @@
+package kkm.fd_svc.proto;
+option java_package = "org.epicsquad.kkm.updateserver.proto";
+
+message VersionInfo {
+  required uint32 major     = 1;
+  optional uint32 minor     = 2;
+  optional uint32 build     = 3;
+  optional uint32 revision  = 4;
+}
+
+enum UpdateType {
+  UPDATE_TYPE_NOTHING  = 1;
+  UPDATE_TYPE_UPDATE   = 2;
+  UPDATE_TYPE_ROLLBACK = 3;
+}
+
+
+enum UpdateStage {
+  UPDATE_STAGE_IDLE               = 0; /* just in case */
+
+  UPDATE_STAGE_INFO_REQUESTED     = 1;
+  UPDATE_STAGE_INFO_RECEIVED      = 2;
+  UPDATE_STAGE_DOWNLOADING        = 3;
+  UPDATE_STAGE_READY_TO_INSTALL   = 4;
+  UPDATE_STAGE_EXTRACTING         = 5;
+  UPDATE_STAGE_INSTALLING         = 6;
+  UPDATE_STAGE_UPDATES_INSTALLED  = 7;
+
+  UPDATE_STAGE_ROLLBACK_SCHEDULED = 100;
+  UPDATE_STAGE_ROLLING_BACK       = 101;
+  UPDATE_STAGE_ROLLBACK_DONE      = 102;
+
+  UPDATE_STAGE_FAILED             = 250;
+}
+
+
+message UpdateStatusInfo {
+  required UpdateType   update_type    = 1;
+  optional VersionInfo  target_version = 2;
+  required UpdateStage  update_stage   = 3;
+  optional string       error_msg      = 4;
+}
+
+message UpdateAction {
+  required UpdateType   update_type        = 1;
+  optional VersionInfo  required_version   = 2; /* required if update_type != UPDATE_TYPE_NOTHING */
+  optional string       download_url       = 3;
+}
+
+message CheckUpdatesRequest {
+  required VersionInfo  installed_version = 1;
+};
+
+message PostUpdateStatusRequest {
+  required UpdateStatusInfo  info = 1;
+};
+

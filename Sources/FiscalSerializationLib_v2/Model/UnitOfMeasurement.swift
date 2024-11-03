@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum UnitOfMeasurement: String {
+public enum UnitOfMeasurement: String {
     case piece = "796"
     case kilogram = "116"
     case service = "5114"

@@ -1,0 +1,56 @@
+/** @file
+ * @brief Структуры сообщений для передачи и хранения информации по ккт.
+ *
+ * Содержит описания типов, хранящих информацию о кассе, торговой точке и организаци
+ */
+option optimize_for = SPEED;
+option java_package = "org.epicsquad.kkm.proto";
+
+package kkm.proto;
+
+/**
+ * @brief Дополнительная информация по ккт - регистрационные данные.
+ *
+ */
+message KkmRegInfo {
+  ///Регистрационный номер (код) точки приема платежей
+  optional string point_of_payment_number = 1; // required since version 201
+  ///Номер платежного терминала
+  optional string terminal_number         = 2; // required since version 201
+  ///ID, выданный КГД
+  optional string fns_kkm_id              = 3; // required since version 201
+  /// Заводской номер ККМ
+  optional string serial_number          = 4; // required since version 201
+  /// Внутренний идентификатор начиная с версии 125
+  optional string kkm_id                  =5; // required since version 201
+}
+
+/**
+ * @brief Дополнительная информация по торговой точке - регистрационные данные.
+ *
+ */
+message PosRegInfo {
+  /// Название торговой точки
+  optional string title       = 1; // required since version 201
+  /// Адрес торговой точки
+  optional string address     = 2; // required since version 201
+}
+
+/**
+ * @brief Дополнительная информация по организации - регистрационные данные.
+ *
+ */
+message OrgRegInfo {
+  /// Название организации или ФИО индивидуального предпринимателя
+  optional string title         = 1; // required since version 201
+  ///  Юр. адрес
+  optional string address       = 2; // required since version 201
+  /// ИИН/БИН
+  optional string inn           = 3; // required since version 201
+  /// Вид налогообложения
+  optional uint32 taxation_type = 4; // not used since version 201
+  /// Вид деятельности
+  optional string okved         = 5; // required since version 201
+  /// Тенант
+  optional int32 tenantId       = 6; // not used since version 201
+}

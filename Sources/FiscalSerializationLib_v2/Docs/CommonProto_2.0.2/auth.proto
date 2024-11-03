@@ -1,0 +1,22 @@
+import "common.proto";
+
+option optimize_for = SPEED;
+option java_package = "org.epicsquad.kkm.proto";
+
+package kkm.proto;
+
+message AuthRequest {
+  required string login = 1;
+  required string password = 2;
+}
+
+message AuthResponse {
+  enum ResultTypeEnum {
+    RESULT_TYPE_OK = 0;
+    RESULT_TYPE_INVALID_LOGIN_PASSWORD = 1;
+  }
+  required ResultTypeEnum result = 1;
+  optional uint32 operator_code = 2;
+  optional string operator_name = 3;
+  repeated UserRoleEnum roles = 4;
+}

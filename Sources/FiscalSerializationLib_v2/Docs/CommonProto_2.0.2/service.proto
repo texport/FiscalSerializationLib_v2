@@ -1,0 +1,133 @@
+/**
+ * @file
+ * @brief Служебные типы данных.
+ * 
+ * Содержит описания типов данных, используемых в служебном обмене.
+ */
+
+import "common.proto";
+import "reginfo.proto";
+import "bind_taxation.proto";
+
+option optimize_for = SPEED;
+option java_package = "org.epicsquad.kkm.proto";
+
+package kkm.proto;
+
+message ServiceRequest {
+
+  /**
+  * @brief Информация о качестве связи.
+  * 
+  */
+  message CommQuality {
+    required uint32 avg_connect_time = 1;
+    optional uint32 avg_ping = 2;
+    optional uint32 loss_ratio = 3;
+  }
+  optional CommQuality comm_quality = 1;
+
+  // tag "2" is used by deprecated structure, please don't reuse
+  // optional SoftwareInfo software_info = 2;
+  
+  /**
+  * @brief Безопасность и статистика.
+  * 
+  */
+  message SecurityStats {
+    message GeoPosition {
+      required int32 latitude = 1;
+      required int32 longitude = 2;
+    }
+    optional GeoPosition geo_position = 1;
+    /**
+    * @deprecated
+    */
+    optional string os_version = 2;
+  }
+  optional SecurityStats security_stats = 3;
+
+  /**
+  * @brief Время нахождения в аварийном режиме.
+  * 
+  * Период времени, в течение которого ККМ находилась в аварийном режиме.
+  */
+  message OfflinePeriod {
+    required DateTime begin_time = 1;
+    required DateTime end_time = 2;
+  }
+
+  message RegInfo {
+    optional KkmRegInfo kkm = 1;
+    optional OrgRegInfo org = 2;
+  }
+
+  optional OfflinePeriod offline_period = 4; // required since version 201
+  optional uint32 nomenclature_version = 5;
+  repeated TicketAdInfo ticket_ad_infos = 6;
+  optional bool get_reg_info  = 7; // required since version 201
+  optional bool get_binded_taxation = 8;
+  optional uint64 marker = 9;
+  // tag "10" is used by deprecated structure, please don't reuse
+  // optional SoftwareInformationOld software_information_old = 10;
+  optional bytes software_information_old = 10;
+
+/**
+  * @brief Информация о программном (и не только) обеспечении.
+  */
+  message SoftwareInformation {
+  
+  /**
+    * @brief Информация о программном модуле (vpm библиотека, партнёрское ПО и т.д.).
+    */
+    message ModuleInformation {
+    
+    /**
+      * @brief Информация об устройстве (для мобильных платформ или ФР).
+      */ 
+      message DeviceInformation {
+        optional string manufacturer = 1;
+        optional string model = 2;
+        optional string firmware_version = 3;
+      }
+  
+      required string name = 1;
+      required string version = 2;
+      optional string build_info = 3;
+      optional DeviceInformation device_info = 4;
+      repeated KeyValuePair extended_info = 5;
+      optional string build_arch = 6;
+    }
+  
+    repeated ModuleInformation module_infos = 1;
+    optional string hardware_arch = 2;
+    optional string os_family = 3;
+    optional string os_version = 4;
+    optional string os_extended_info = 5;  
+    optional string runtime_version = 6;  
+    optional uint32 partner_id = 7;
+  }
+  optional SoftwareInformation software_information = 11;
+  optional RegInfo reg_info = 12;
+
+  repeated KeyValuePair auxiliary = 60;
+}
+
+message ServiceResponse {
+  repeated TicketAd ticket_ads = 1;
+  
+  message RegInfo {
+    optional KkmRegInfo kkm = 1;
+    optional PosRegInfo pos = 2;
+    optional OrgRegInfo org = 3;
+  }
+  optional RegInfo reg_info = 2;
+  optional BindedTaxation binded_taxation = 3;
+
+  message LastDocumentInfo {
+    required uint32 fr_shift_number = 1;
+    optional uint64 printed_document_number = 2;
+  }
+  optional LastDocumentInfo last_document_info = 4;
+  repeated KeyValuePair auxiliary = 30;
+}

@@ -1,0 +1,134 @@
+/** @file
+ * @brief Структуры общего назначения.
+ * 
+ * Содержит описания структур и перечислений, используемых в других файлах.
+ */
+
+option optimize_for = SPEED;
+option java_package = "org.epicsquad.kkm.proto";
+
+package kkm.proto;
+
+/**
+ * @brief Дата.
+ * 
+ * Структура, описывающая дату по григорианскому календарю.
+ */
+message Date {
+  
+  /// Год в четырехзначном представлении, например: 2013.
+  required uint32 year = 1;
+  
+  /// Месяц года в диапазоне 1-12.
+  required uint32 month = 2;
+  
+  /// День месяца.
+  required uint32 day = 3;
+}
+
+/**
+ * @brief Время.
+ * 
+ * Структура, описывающая время суток.
+ */
+message Time {
+
+  /// Час суток в диапазоне 0-23.
+  required uint32 hour = 1;
+
+  /// Минута часа в диапазоне 0-59.
+  required uint32 minute = 2;
+
+  /// Секунда в диапазоне 0-59.
+  optional uint32 second = 3;
+}
+
+/**
+ * @brief Дата и время.
+ * 
+ * Структура, описывающая момент времени.
+ */
+message DateTime {
+
+  /// Дата.
+  required Date date = 1;
+
+  /// Время.
+  required Time time = 2;
+}
+
+/**
+ * @brief Деньги.
+ * 
+ * Структура, описывающая деньги.
+ */
+message Money {
+  
+  /// "Купюры".
+  ///
+  /// Количество основных денежных единиц базовой валюты, например: 230 рублей.
+  required uint64 bills = 1;
+  
+  /// "Монеты".
+  ///
+  /// Количество разменных денежных единиц, например: 43 копейки.
+  required uint32 coins = 2;
+}
+
+message Operator {
+  required uint32 code = 1;
+  optional string name = 2;
+}
+
+enum DomainTypeEnum {
+  DOMAIN_TRADING = 0;
+  DOMAIN_SERVICES = 1;
+  DOMAIN_GASOIL = 2;
+  DOMAIN_HOTELS = 3;
+  DOMAIN_TAXI = 4;
+  DOMAIN_PARKING = 5;
+}
+
+enum OperationTypeEnum {
+  OPERATION_BUY = 0;
+  OPERATION_BUY_RETURN = 1;
+  OPERATION_SELL = 2;
+  OPERATION_SELL_RETURN = 3;
+}
+
+enum PaymentTypeEnum {
+  PAYMENT_CASH = 0;
+  PAYMENT_CARD = 1;
+  PAYMENT_CREDIT = 2;
+  PAYMENT_TARE = 3;
+  PAYMENT_MOBILE = 4;
+}
+
+enum UserRoleEnum {
+  USER_ROLE_PAYMASTER = 1;      // Paymaster role
+  USER_ROLE_CHIEF_PAYMASTER = 2;// Chief paymaster role
+  USER_ROLE_ADMINISTRATOR = 3;  // Administrator role
+}
+
+enum TicketAdTypeEnum {
+  TICKET_AD_OFD = 0;
+  TICKET_AD_ORG = 1;
+  TICKET_AD_POS = 2;
+  TICKET_AD_KKM = 3;
+  TICKET_AD_INFO = 4;
+}
+
+message TicketAdInfo {
+  required TicketAdTypeEnum type = 1;
+  required uint64 version = 2;
+}
+
+message TicketAd {
+  required TicketAdInfo info = 1;
+  required string text = 2;
+}
+
+message KeyValuePair { 
+  required string key = 1;
+  optional string value = 2;
+}

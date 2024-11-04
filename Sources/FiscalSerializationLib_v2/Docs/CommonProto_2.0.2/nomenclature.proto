@@ -1,0 +1,64 @@
+import "common.proto";
+
+option optimize_for = SPEED;
+option java_package = "org.epicsquad.kkm.proto";
+
+package kkm.proto;
+
+message NomenclatureRequest {
+  required uint32 current_version = 1;
+}
+
+message NomenclatureResponse {
+
+  required uint32 version = 1;
+  optional DateTime created_time = 2;
+  
+  enum ElementTypeEnum {
+    GROUP = 0;
+    ITEM = 1;
+  }
+  
+  message Tax {
+    required uint32 taxation_type = 1;
+    required uint32 tax_type      = 2;
+    required uint32 tax_percent   = 3;
+  }
+  
+  message Item{
+    optional string article = 1;
+    optional string barcode = 2;
+    optional string description = 3;
+    required Money purchase_price =6;
+    required Money sell_price = 7;
+    optional uint32 discount_percent = 8;
+    optional Money discount_sum = 9;
+    optional uint32 markup_percent = 10;
+    optional Money markup_sum = 11;
+    repeated Tax taxes = 12;
+    optional uint32 measure_count = 13;
+    optional string measure_title = 14;
+    optional bool measure_fractional = 15;
+    optional string measure_unit_code = 16; // since version 201
+  }
+
+  message Element {
+    required ElementTypeEnum type = 1;
+    required string title = 3;
+    optional uint64 parent_group_id = 4;
+    
+    required uint64 id = 5; 
+    optional Item item = 6; // required if type == ITEM
+  }
+  
+  repeated Element elements = 3;
+  
+  enum NomenclatureResultTypeEnum {
+    RESULT_TYPE_OK = 0;
+    RESULT_TYPE_VERSION_IS_ACTUAL = 1;
+    RESULT_TYPE_NO_VERSION = 2;
+  }
+  required NomenclatureResultTypeEnum result = 4;
+}
+
+

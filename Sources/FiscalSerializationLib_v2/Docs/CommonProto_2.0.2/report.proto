@@ -1,0 +1,141 @@
+import "common.proto";
+import "ticket.proto";
+
+option optimize_for = SPEED;
+option java_package = "org.epicsquad.kkm.proto";
+
+package kkm.proto;
+
+message CloseShiftRequest {
+  required DateTime close_time = 1;
+  optional bool is_offline = 2;
+  optional uint32 fr_shift_number = 3;
+  optional bool withdraw_money = 4;
+  optional ZXReport z_report = 5; // since protocol version 125 required
+  optional Operator operator = 6; // since protocol version 125 required
+  optional uint64 printed_document_number = 7; // since protocol version 125
+}
+
+enum MoneyPlacementEnum {
+  MONEY_PLACEMENT_DEPOSIT = 0;
+  MONEY_PLACEMENT_WITHDRAWAL = 1;
+}
+
+message MoneyPlacementRequest {
+  required DateTime datetime = 1;
+  required MoneyPlacementEnum operation = 2;
+  required Money sum = 3;
+  optional bool is_offline = 4;
+  optional uint32 fr_shift_number = 5;
+  optional uint64 printed_document_number = 6; // since protocol version 125
+  optional Operator operator = 7; // since protocol version 2.0.2, required
+}
+
+enum ReportTypeEnum {
+  REPORT_Z = 0;
+  REPORT_X = 1;
+}
+
+message ZXReport {
+  required DateTime date_time = 1;
+  required uint32 shift_number = 2;
+
+  message Operation {
+    required OperationTypeEnum operation = 1;
+    required uint32 count = 2;
+    required Money sum = 3;
+  }
+
+  message Section {
+    required string section_code = 1;
+    repeated Operation operations = 2;
+  }
+  repeated Section sections = 3;
+  repeated Operation operations = 4;
+  repeated Operation discounts = 5;
+  repeated Operation markups = 6;
+  repeated Operation total_result = 7;
+
+  message Tax {
+    required uint32 tax_type = 1;
+    required uint32 percent = 2;
+
+    message TaxOperation {
+      required OperationTypeEnum operation = 1;
+      required Money turnover = 2;
+      required Money sum = 3;
+      optional Money turnover_without_tax = 4; // required since version 200
+    }
+    repeated TaxOperation operations = 3;
+  }
+  repeated Tax taxes = 8;
+
+  message NonNullableSum
+  {
+    required OperationTypeEnum operation = 1;
+    required Money sum = 2;
+  }
+  repeated NonNullableSum  start_shift_non_nullable_sums = 9;
+
+  message TicketOperation {
+    required OperationTypeEnum operation = 1;
+    required uint32 tickets_total_count = 2;
+    required uint32 tickets_count = 3;
+    required Money tickets_sum = 4;
+
+    message Payment {
+      required PaymentTypeEnum payment = 1;
+      required Money sum = 2;
+      optional uint32 count = 3; // since protocol version 125 required
+    }
+    repeated Payment payments = 5;
+    optional uint32 offline_count = 6; // since protocol version 125 required
+    optional Money discount_sum = 7; // since protocol version 125 required
+    optional Money markup_sum = 8; // since protocol version 125 required
+    optional Money change_sum = 9; // since protocol version 125 required
+  }
+  repeated TicketOperation ticket_operations = 10;
+
+  message MoneyPlacement {
+    required MoneyPlacementEnum operation = 1;
+    required uint32 operations_total_count = 2;
+    required uint32 operations_count = 3;
+    required Money operations_sum = 4;
+    optional uint32 offline_count = 5; // since protocol version 125 required
+  }
+  repeated MoneyPlacement money_placements = 11;
+
+  message AnnulledTickets {
+    required uint32 annulled_tickets_total_count = 1;
+    required uint32 annulled_tickets_count = 2;
+    repeated Operation annulled_operations = 3;
+  }
+  optional AnnulledTickets annulled_tickets = 12;
+
+  required Money cash_sum = 13;
+
+  message Revenue
+  {
+    required Money sum = 1;
+    required bool is_negative = 2;
+  }
+  required Revenue revenue = 14;
+
+  repeated NonNullableSum non_nullable_sums = 15;
+  optional DateTime open_shift_time = 16; // since protocol version 125 required
+  optional DateTime close_shift_time = 17; // since protocol version 125 required
+  optional string checksum = 18; // since protocol version 125 required
+}
+
+
+message ReportRequest {
+  required ReportTypeEnum report = 1;
+  required DateTime date_time = 2;
+  optional bool is_offline = 3;
+  optional ZXReport zx_report = 4; // since protocol version 125 required
+}
+
+message ReportResponse {
+  required ReportTypeEnum report = 1;
+  optional ZXReport zx_report = 2;
+}

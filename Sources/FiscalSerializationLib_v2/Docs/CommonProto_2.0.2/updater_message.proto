@@ -1,0 +1,38 @@
+import "updater.proto";
+package kkm.fd_svc.proto;
+option java_package = "org.epicsquad.kkm.updateserver.proto";
+
+enum RequestTypeEnum {
+  REQUEST_CHECK_UPDATES      = 1;
+  REQUEST_POST_UPDATE_STATUS = 2;
+}
+
+
+enum ResultTypeEnum {
+  RESULT_OK               = 0;
+  RESULT_UNKNOWN_REQUEST  = 1;
+  RESULT_UNREGISTERED_KKM = 2;
+  RESULT_SYSTEM_ERROR     = 3;
+}
+
+
+message Request {
+  required RequestTypeEnum         request_type   = 1;
+  required uint32                  kkm_id         = 2;
+  optional CheckUpdatesRequest     updates_check  = 3; /* required if request_type == REQUEST_CHECK_UPDATES */
+  optional PostUpdateStatusRequest update_status  = 4; /* required if request_type == REQUEST_POST_UPDATE_STATUS */
+}
+
+
+message Result {
+  required ResultTypeEnum  result_code   = 1;
+  optional string          message       = 2;
+}
+
+
+message Response {
+  required RequestTypeEnum  request_type   = 1;
+  required uint32           kkm_id         = 2;
+  required Result           result         = 3;
+  optional UpdateAction     update_action  = 4; /* required if request_type == REQUEST_CHECK_UPDATES */
+}

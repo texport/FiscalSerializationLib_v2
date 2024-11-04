@@ -1,9 +1,10 @@
-name: Restrict PR to Main
+name: Restrict PR to Main and Dev
 
 on:
   pull_request:
     branches:
       - main
+      - dev
 
 jobs:
   check-branch-name:
@@ -11,7 +12,14 @@ jobs:
     steps:
       - name: Check Branch Name
         run: |
-          if [[ "${{ github.head_ref }}" != release/* && "${{ github.head_ref }}" != hotfix/* ]]; then
-            echo "Pull requests to 'main' must come from a 'release/' or 'hotfix/' branch."
-            exit 1
+          if [[ "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
+            if [[ "${{ github.head_ref }}" != release/* && "${{ github.head_ref }}" != hotfix/* ]]; then
+              echo "Pull requests to 'main' must come from a 'release/' or 'hotfix/' branch."
+              exit 1
+            fi
+          elif [[ "${{ github.event.pull_request.base.ref }}" == "dev" ]]; then
+            if [[ "${{ github.head_ref }}" != feature/* && "${{ github.head_ref }}" != hotfix/* ]]; then
+              echo "Pull requests to 'dev' must come from a 'feature/' or 'hotfix/' branch."
+              exit 1
+            fi
           fi

@@ -168,16 +168,18 @@ final class CommandTicketRequest {
         var itemsCpcr = [Kkm_Proto_TicketRequest.Item]()
         
         for item in ticketItems {
-            var itemCpcr = Kkm_Proto_TicketRequest.Item()
-            
             let money = Money()
             let price = try money.createMoney(bills: item.billsPrice, coins: item.coinsPrice)
             var itemTaxs: [Kkm_Proto_TicketRequest.Tax] = []
             
             /// Проверяем есть ли НДС внутри позиции
             if item.isTicketItemTax {
+                guard !isTaxAllTicket else {
+                    throw NSError(domain: "bodyBuilder", code: 2, userInfo: [NSLocalizedDescriptionKey: "Ошибка с передачей налогов: в чеке может быть либо налог на весь чек, либо налог на каждую позицию. Проверьте корректность входных данных"])
+                }
+                
                 guard let tax = item.tax, let billsTax = item.billsTax, let coinsTax = item.coinsTax else {
-                    throw NSError(domain: "bodyBuilder", code: 2, userInfo: [NSLocalizedDescriptionKey: "Налог на позицию (isTicketItemTax) указан, но значения tax, billsTax или coinsTax отсутствуют."])
+                    throw NSError(domain: "bodyBuilder", code: 3, userInfo: [NSLocalizedDescriptionKey: "Налог на позицию (isTicketItemTax) указан, но значения tax, billsTax или coinsTax отсутствуют."])
                 }
                 let taxes = Tax()
                 let money = Money()
@@ -186,26 +188,24 @@ final class CommandTicketRequest {
             
             /// Проверяем если возврат, то скидок не может быть
             if (item.isTicketItemDiscount && ticketCpcr.operation.rawValue == 1) || (item.isTicketItemDiscount && ticketCpcr.operation.rawValue == 3) {
-                throw NSError(domain: "bodyBuilder", code: 3, userInfo: [NSLocalizedDescriptionKey: "При операциях возврат покупки или возврат продажи не может быть скидок вообще!!!"])
+                throw NSError(domain: "bodyBuilder", code: 4, userInfo: [NSLocalizedDescriptionKey: "При операциях возврат покупки или возврат продажи не может быть скидок вообще!!!"])
             }
             
-            let itemCommodity = try createItemCommodity(name: item.nameTicketItem, sectionCode: item.sectionCode, quantity: item.quantity, price: price, taxes: itemTaxs, exciseStamp: item.dataMatrix, barcode: item.barcode, measureUnitCode: item.measureUnitCode.rawValue)
-
-            itemCpcr = try createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum.itemTypeCommodity, commodity: itemCommodity)
-            itemsCpcr.append(itemCpcr)
+            let itemCommodityCpcr = try ItemCommodity().createItemCommodity(name: item.nameTicketItem, sectionCode: item.sectionCode, quantity: item.quantity, price: price, taxes: itemTaxs, exciseStamp: item.dataMatrix, barcode: item.barcode, measureUnitCode: item.measureUnitCode)
+            itemsCpcr.append(itemCommodityCpcr)
             
             /// Если есть скидка на позицию
             if item.isTicketItemDiscount {
                 guard !isDiscountAllTicket else {
-                    throw NSError(domain: "bodyBuilder", code: 4, userInfo: [NSLocalizedDescriptionKey: "Скидка может быть только на позицию или на весь чек"])
+                    throw NSError(domain: "bodyBuilder", code: 5, userInfo: [NSLocalizedDescriptionKey: "Скидка может быть только на позицию или на весь чек"])
                 }
                 
                 guard let itemDiscountName = item.discountName else {
-                    throw NSError(domain: "bodyBuilder", code: 5, userInfo: [NSLocalizedDescriptionKey: "У скидки обязательно должно быть имя"])
+                    throw NSError(domain: "bodyBuilder", code: 6, userInfo: [NSLocalizedDescriptionKey: "У скидки обязательно должно быть имя"])
                 }
                 
                 guard let itemBillsDiscount = item.billsDiscount, let itemCoinsDiscount = item.coinsDiscount else {
-                    throw NSError(domain: "bodyBuilder", code: 6, userInfo: [NSLocalizedDescriptionKey: "У скидки обязательно должны быть суммы в billsDiscount и coinsDiscount"])
+                    throw NSError(domain: "bodyBuilder", code: 7, userInfo: [NSLocalizedDescriptionKey: "У скидки обязательно должны быть суммы в billsDiscount и coinsDiscount"])
                 }
                 
                 let money = Money()
@@ -304,26 +304,6 @@ final class CommandTicketRequest {
         return cashier
     }
 
-    // MARK: Item
-    /// В это мразделе мы не добавили ItemStornoCommodity/ItemStornoMarkup/ItemStornoDiscound
-    /// так как считаем их legacy от "железных касс" и излишней функцией
-    ///
-    /// Метод для того что бы создать Item с конкретной позицией товара/услуги/товара
-    private func createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum,
-                    commodity: Kkm_Proto_TicketRequest.Item.Commodity) throws -> Kkm_Proto_TicketRequest.Item {
-        var item = Kkm_Proto_TicketRequest.Item()
-        
-        if type.rawValue == 1 {
-            item.type = type
-        } else {
-            throw NSError(domain: "InvalidItemType", code: 1, userInfo: [NSLocalizedDescriptionKey: "Для товаров/услуг/работ type должен быть только 1(цифра один без ковычек)"])
-        }
-        
-        item.commodity = commodity
-        
-        return item
-    }
-    
     /// Метод для того что бы создать скиндку на конкретный товар/работу/услугу
     /// Нельзя его использовать для пустого ticket, только если в ticket есть товар/работа/услуга
     private func createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum,
@@ -343,53 +323,7 @@ final class CommandTicketRequest {
         
         return item
     }
-    
-    // MARK: ItemCommodity
-    /// Метод создает конкретную работу, товар, услугу
-    private func createItemCommodity(name: String,
-                             sectionCode: String,
-                             quantity: UInt32,
-                             price: Kkm_Proto_Money,
-                             taxes: [Kkm_Proto_TicketRequest.Tax],
-                             exciseStamp: String?,
-                             barcode: String?,
-                             measureUnitCode: String) throws -> Kkm_Proto_TicketRequest.Item.Commodity {
-        var itemCommodity = Kkm_Proto_TicketRequest.Item.Commodity()
         
-        if (!isTaxAllTicket && taxes.count == 0) || (isTaxAllTicket && taxes.count > 0){
-            throw NSError(domain: "InvalidTax", code: 1, userInfo: [NSLocalizedDescriptionKey: "Ошибка с передачей налогов: в чеке может быть либо налог на весь чек, либо налог на каждую позицию. Проверьте корректность входных данных"])
-        }
-        
-        guard isValidName(name) else {
-            throw NSError(domain: "InvalidName", code: 2, userInfo: [NSLocalizedDescriptionKey: "Название не может быть пустым, содержать только пробелы или быть менее 2-х символов"])
-        }
-        
-        // Считаю что code использовать вообще не нужно
-        
-        itemCommodity.name = name
-        itemCommodity.sectionCode = sectionCode
-        itemCommodity.quantity = quantity
-        itemCommodity.price = price
-        itemCommodity.sum = calculateSum(quantity: quantity, price: price)
-        itemCommodity.taxes = taxes
-        
-        if let exciseStamp = exciseStamp {
-            itemCommodity.exciseStamp = exciseStamp
-        }
-        
-        // Считаю что physicalLabel использовать вообще не нужно
-        // Считаю что productId использовать вообще не нужно
-        
-        if let barcode = barcode {
-            itemCommodity.barcode = barcode
-        }
-        
-        itemCommodity.measureUnitCode = measureUnitCode
-        itemCommodity.auxiliary = [Kkm_Proto_KeyValuePair]()
-        
-        return itemCommodity
-    }
-    
     // MARK: Amounts - Общий итог ticket(чека)
     // Метод создает сущность для протокола Kkm_Proto_TicketRequest.Amounts
     private func createAmounts(payments: [Kkm_Proto_TicketRequest.Payment],
@@ -465,35 +399,6 @@ final class CommandTicketRequest {
         } else {
             return nil
         }
-    }
-        
-    // MARK: Методы Хелперы
-    
-    // FIXME: Нужно обязательно сделать проверку на то что quantity передается в тысячных
-    
-    // Проверка параметра Name для Commodity
-    private func isValidName(_ name: String) -> Bool {
-        // Регулярное выражение для проверки: строка не должна быть пустой, содержать только пробелы или состоять из одного символа
-        let regex = "^(?!\\s*$).{2,}$"
-        let predicate = NSPredicate(format: "SELF MATCHES %@", regex)
-        return predicate.evaluate(with: name)
-    }
-    
-    // Метод для вычисления суммы на основе количества в тысячных и цены
-    private func calculateSum(quantity: UInt32, price: Kkm_Proto_Money) -> Kkm_Proto_Money {
-        var total = Kkm_Proto_Money()
-
-        // Вычисляем общую сумму с учетом того, что quantity уже в тысячных
-        total.bills = (price.bills * UInt64(quantity)) / 1000
-        total.coins = (price.coins * quantity) / 1000
-
-        // Если coins больше 100, конвертируем их в bills
-        if total.coins >= 100 {
-            total.bills += UInt64(total.coins / 100)
-            total.coins = total.coins % 100
-        }
-
-        return total
     }
     
     // MARK: ПУБЛИЧНЫЕ МЕТОДЫ

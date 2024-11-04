@@ -20,8 +20,8 @@ class OfdConnectorTests: XCTestCase {
         version: UInt16(202), // версия 2.0.2
         size: 0, // размер будет вычислен позже
         id: UInt32(200956),
-        token: UInt32(2704817126),
-        reqNum: UInt16(14)
+        token: UInt32(174541580),
+        reqNum: UInt16(18)
     )
     
     func testSendCommandInfoToOfd() {
@@ -39,12 +39,14 @@ class OfdConnectorTests: XCTestCase {
             // Сериализуем заголовок
             let headerData = fullHeader.toData()
 
+            try print(MessageHeader.fromData(headerData))
+            
             // Формируем полное сообщение (header + payload)
             var message = Data()
             message.append(headerData)
             message.append(payload)
 
-            print("Полное сообщение (hex): \(message.map { String(format: "%02hhx", $0) }.joined())")
+            print("Полное сообщение (hex) перед отправкой: \(message.map { String(format: "%02hhx", $0) }.joined())")
 
             // Отправляем сообщение на сервер
             let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverIP, serverPort: serverPort)
@@ -53,6 +55,7 @@ class OfdConnectorTests: XCTestCase {
             let messageResponse = try MessageHeader.fromData(response)
             let deComandInfo = try commandInfo.deserializeCommandInfoResponse(data: response)
             
+            print("Полное сообщение (hex) от сервера: \(response.map { String(format: "%02hhx", $0) }.joined())")
             print("Заголовок от сервера:\n \(messageResponse)")
             print("Payload от сервера:\n \(deComandInfo)")
             // В зависимости от специфики протокола можно добавить больше проверок
@@ -93,7 +96,7 @@ class OfdConnectorTests: XCTestCase {
                                          billsPrice: 1904, coinsPrice: 0,
                                          isTicketItemTax: false, tax: nil, billsTax: nil, coinsTax: nil,
                                          isTicketItemDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil,
-                                         dataMatrix: nil, barcode: "123456789")
+                                         dataMatrix: nil, barcode: "12345678")
         } catch {
             XCTFail("Ошибка при создании ticketItem1: \(error)")
         }

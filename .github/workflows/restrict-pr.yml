@@ -1,0 +1,17 @@
+name: Restrict PR to Main
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  check-branch-name:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Branch Name
+        run: |
+          if [[ "${{ github.head_ref }}" != release/* && "${{ github.head_ref }}" != hotfix/* ]]; then
+            echo "Pull requests to 'main' must come from a 'release/' or 'hotfix/' branch."
+            exit 1
+          fi

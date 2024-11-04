@@ -209,7 +209,8 @@ final class CommandTicketRequest {
                 }
                 
                 let money = Money()
-                let itemCpcrDiscount = try createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum.itemTypeDiscount, modifier: createModifier(name: itemDiscountName, sum: money.createMoney(bills: itemBillsDiscount, coins: itemCoinsDiscount)))
+                let discount = Discount()
+                let itemCpcrDiscount = try createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum.itemTypeDiscount, modifier: discount.createDicountModifier(name: itemDiscountName, sum: money.createMoney(bills: itemBillsDiscount, coins: itemCoinsDiscount)))
                 
                 itemsCpcr.append(itemCpcrDiscount)
                 
@@ -389,18 +390,6 @@ final class CommandTicketRequest {
         return itemCommodity
     }
     
-    // MARK: Modifier - создание скидки/наценки
-    private func createModifier(name: String, sum: Kkm_Proto_Money) throws -> Kkm_Proto_TicketRequest.Modifier {
-        var modifier = Kkm_Proto_TicketRequest.Modifier()
-        
-        modifier.name = name
-        modifier.sum = sum
-        modifier.taxes = [Kkm_Proto_TicketRequest.Tax]()
-        modifier.auxiliary = [Kkm_Proto_KeyValuePair]()
-        
-        return modifier
-    }
-    
     // MARK: Amounts - Общий итог ticket(чека)
     // Метод создает сущность для протокола Kkm_Proto_TicketRequest.Amounts
     private func createAmounts(payments: [Kkm_Proto_TicketRequest.Payment],
@@ -471,8 +460,8 @@ final class CommandTicketRequest {
             }
             
             let money = Money()
-            
-            return try createModifier(name: name, sum: money.createMoney(bills: billsDiscount, coins: coinsDiscount))
+            let discount = Discount()
+            return try discount.createDicountModifier(name: name, sum: money.createMoney(bills: billsDiscount, coins: coinsDiscount))
         } else {
             return nil
         }

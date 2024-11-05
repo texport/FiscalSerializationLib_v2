@@ -20,8 +20,8 @@ class OfdConnectorTests: XCTestCase {
         version: UInt16(202), // версия 2.0.2
         size: 0, // размер будет вычислен позже
         id: UInt32(200956),
-        token: UInt32(174541580),
-        reqNum: UInt16(18)
+        token: UInt32(1843010655),
+        reqNum: UInt16(19)
     )
     
     func testSendCommandInfoToOfd() {

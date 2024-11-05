@@ -16,16 +16,19 @@ final class ItemCommodityTests: XCTestCase {
         let sectionCode = "001"
         let quantity: UInt32 = 1000
         let price: Kkm_Proto_Money
+        
         do {
             price = try Money().createMoney(bills: 10, coins: 50)
         } catch {
             XCTFail("Не удалось создать деньги: \(error.localizedDescription)")
             return
         }
+        
         let taxes: [Kkm_Proto_TicketRequest.Tax] = []
         let measureUnitCode = UnitOfMeasurement.kilogram
 
         let result: Kkm_Proto_TicketRequest.Item
+        
         do {
             result = try itemCommodity.createItemCommodity(
                 name: name,
@@ -53,12 +56,14 @@ final class ItemCommodityTests: XCTestCase {
         let sectionCode = "001"
         let quantity: UInt32 = 1000
         let price: Kkm_Proto_Money
+        
         do {
             price = try Money().createMoney(bills: 10, coins: 50)
         } catch {
             XCTFail("Не удалось создать деньги: \(error.localizedDescription)")
             return
         }
+        
         let taxes: [Kkm_Proto_TicketRequest.Tax] = []
         let measureUnitCode = UnitOfMeasurement.kilogram
 
@@ -83,12 +88,14 @@ final class ItemCommodityTests: XCTestCase {
         let sectionCode = "001"
         let invalidQuantity: UInt32 = 0
         let price: Kkm_Proto_Money
+        
         do {
             price = try Money().createMoney(bills: 10, coins: 50)
         } catch {
             XCTFail("Не удалось создать деньги: \(error.localizedDescription)")
             return
         }
+        
         let taxes: [Kkm_Proto_TicketRequest.Tax] = []
         let measureUnitCode = UnitOfMeasurement.kilogram
 
@@ -113,12 +120,14 @@ final class ItemCommodityTests: XCTestCase {
         let sectionCode = "001"
         let quantity: UInt32 = 1000
         let price: Kkm_Proto_Money
+        
         do {
             price = try Money().createMoney(bills: 10, coins: 50)
         } catch {
             XCTFail("Не удалось создать деньги: \(error.localizedDescription)")
             return
         }
+        
         let taxes: [Kkm_Proto_TicketRequest.Tax] = []
         let invalidExciseStamp = "  "
         let measureUnitCode = UnitOfMeasurement.kilogram
@@ -144,12 +153,14 @@ final class ItemCommodityTests: XCTestCase {
         let sectionCode = "001"
         let quantity: UInt32 = 1000
         let price: Kkm_Proto_Money
+        
         do {
             price = try Money().createMoney(bills: 10, coins: 50)
         } catch {
             XCTFail("Не удалось создать деньги: \(error.localizedDescription)")
             return
         }
+        
         let taxes: [Kkm_Proto_TicketRequest.Tax] = []
         let invalidBarcode = "12345"
         let measureUnitCode = UnitOfMeasurement.kilogram
@@ -175,18 +186,21 @@ final class ItemCommodityTests: XCTestCase {
         let sectionCode = "001"
         let quantity: UInt32 = 1000
         let price: Kkm_Proto_Money
+        
         do {
             price = try Money().createMoney(bills: 10, coins: 50)
         } catch {
             XCTFail("Не удалось создать деньги: \(error.localizedDescription)")
             return
         }
+        
         let taxes: [Kkm_Proto_TicketRequest.Tax] = []
         let exciseStamp = "ValidExciseStamp"
         let barcode = "12345678"
         let measureUnitCode = UnitOfMeasurement.kilogram
 
         let result: Kkm_Proto_TicketRequest.Item
+        
         do {
             result = try itemCommodity.createItemCommodity(
                 name: name,

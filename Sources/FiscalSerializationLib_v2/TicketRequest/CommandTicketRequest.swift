@@ -209,12 +209,13 @@ final class CommandTicketRequest {
                 }
                 
                 let money = Money()
-                let discount = Discount()
-                let itemCpcrDiscount = try createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum.itemTypeDiscount, modifier: discount.createDicountModifier(name: itemDiscountName, sum: money.createMoney(bills: itemBillsDiscount, coins: itemCoinsDiscount)))
+                let itemDiscount = ItemDiscount()
+                // TODO: добавить главную проверку, если есть скинда/наценка на весь чек, то этот item нельзя создать
+                let itemCpcrDiscount = try itemDiscount.createItemDiscount(name: itemDiscountName, sum: money.createMoney(bills: itemBillsDiscount, coins: itemCoinsDiscount))
                 
                 itemsCpcr.append(itemCpcrDiscount)
                 
-                /// обязательно обновить счетчик общих скидок в amounts
+                // TODO: нужно добавить подсчет общих скидок в amount
             }
         }
         
@@ -303,27 +304,7 @@ final class CommandTicketRequest {
         
         return cashier
     }
-
-    /// Метод для того что бы создать скиндку на конкретный товар/работу/услугу
-    /// Нельзя его использовать для пустого ticket, только если в ticket есть товар/работа/услуга
-    private func createItem(type: Kkm_Proto_TicketRequest.Item.ItemTypeEnum,
-                    modifier: Kkm_Proto_TicketRequest.Modifier) throws -> Kkm_Proto_TicketRequest.Item {
-        // добавить главную проверку, если есть скинда/наценка на весь чек, то этот item нельзя создать
-        var item = Kkm_Proto_TicketRequest.Item()
-        
-        if type.rawValue == 5 {
-            item.type = type
-        } else {
-            throw NSError(domain: "InvalidItemType", code: 1, userInfo: [NSLocalizedDescriptionKey: "Для скидок type = 5"])
-        }
-        
-        if type.rawValue == 5 {
-            item.discount = modifier
-        }
-        
-        return item
-    }
-        
+    
     // MARK: Amounts - Общий итог ticket(чека)
     // Метод создает сущность для протокола Kkm_Proto_TicketRequest.Amounts
     private func createAmounts(payments: [Kkm_Proto_TicketRequest.Payment],

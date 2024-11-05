@@ -82,7 +82,7 @@ final class CommandTicketRequest {
         ticketCpcr.frShiftNumber = ticket.frShiftNumber
         
         // Записываем кассира
-        try ticketCpcr.operator = createOperator(code: ticket.codeOperator, name: ticket.nameOperator)
+        try ticketCpcr.operator = Operator().createOperator(code: ticket.codeOperator, name: ticket.nameOperator)
         
         try ticketCpcr.items = bodyBuilder()
         
@@ -282,27 +282,6 @@ final class CommandTicketRequest {
         }
         
         throw NSError(domain: "InvalidOperationType", code: 1, userInfo: [NSLocalizedDescriptionKey: "Недопустимый код типа операции. Допустимые значения: 0 (Покупка), 1 (Возврат покупки), 2 (Продажа), 3 (Возврат продажи)"])
-    }
-    
-    // MARK: OPERATOR - создаем кассира
-    private func createOperator(code: UInt32, name: String) throws -> Kkm_Proto_Operator {
-        // Проверка: код оператора должен быть больше 0
-        guard code > 0 else {
-            throw NSError(domain: "InvalidOperator", code: 1, userInfo: [NSLocalizedDescriptionKey: "Код оператора должен быть больше 0."])
-        }
-        
-        // Проверка: имя оператора должно быть валидным
-        let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        guard !trimmedName.isEmpty, trimmedName.count >= 2 else {
-            throw NSError(domain: "InvalidOperator", code: 2, userInfo: [NSLocalizedDescriptionKey: "Имя оператора не может быть пустым, содержать только пробелы и должно быть длиной не менее 2 символов."])
-        }
-        
-        var cashier = Kkm_Proto_Operator()
-        cashier.code = code
-        cashier.name = trimmedName
-        
-        return cashier
     }
     
     // MARK: Amounts - Общий итог ticket(чека)

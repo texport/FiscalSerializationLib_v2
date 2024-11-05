@@ -20,8 +20,8 @@ class OfdConnectorTests: XCTestCase {
         version: UInt16(202), // версия 2.0.2
         size: 0, // размер будет вычислен позже
         id: UInt32(200956),
-        token: UInt32(3038464673),
-        reqNum: UInt16(21)
+        token: UInt32(3103531874),
+        reqNum: UInt16(31)
     )
     
     func testSendCommandInfoToOfd() {
@@ -50,10 +50,13 @@ class OfdConnectorTests: XCTestCase {
 
             // Отправляем сообщение на сервер
             let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverIP, serverPort: serverPort)
+            print("Полное сообщение (hex) от сервера: \(response.map { String(format: "%02hhx", $0) }.joined())")
 
             // Проверяем ответ от сервера
             let messageResponse = try MessageHeader.fromData(response)
+            print("funcCommandInfo Header: \(messageResponse)")
             let deComandInfo = try commandInfo.deserializeCommandInfoResponse(data: response)
+            print("funcCommandInfo Payload: \(deComandInfo)")
             
             print("Полное сообщение (hex) от сервера: \(response.map { String(format: "%02hhx", $0) }.joined())")
             print("Заголовок от сервера:\n \(messageResponse)")
@@ -69,7 +72,9 @@ class OfdConnectorTests: XCTestCase {
     func testSendCommandTicketRequest() {
         var ticket: Ticket?
         var ticketItem1: TicketItem?
-        var ticketCpcr: CommandTicketRequest?
+        var ticketItem2: TicketItem?
+        var ticketItem3: TicketItem?
+        var ticketCpcr: Data?
         
         do {
             ticket = try Ticket(isTicketOnline: true, offlineTicketNumber: nil,
@@ -80,22 +85,32 @@ class OfdConnectorTests: XCTestCase {
                                 operation: 2,
                                 year: 2024, month: 10, day: 31, hour: 23, minute: 0, second: 0,
                                 codeOperator: 1, nameOperator: "Сергей Иванов",
-                                isCash: true, billsCashSum: 1000, coinsCashSum: 0, billsCashTaken: 1000, coinsCashTaken: 0,
-                                isCard: true, billsCardSum: 500, coinsCardSum: 0,
-                                isMobile: true, billsMobileSum: 404, coinsMobileSum: 0,
-                                isTicketAllTax: true, tax: 12000, billsTax: 204, coinsTax: 0,
+                                isCash: true, billsCashSum: 2700, coinsCashSum: 0, billsCashTaken: 2700, coinsCashTaken: 0,
+                                isCard: false, billsCardSum: nil, coinsCardSum: nil,
+                                isMobile: false, billsMobileSum: nil, coinsMobileSum: nil,
+                                isTicketAllTax: false, tax: nil, billsTax: nil, coinsTax: nil,
                                 isTicketAllDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil,
-                                billsTotal: 1904, coinsTotal: 0,
+                                billsTotal: 2700, coinsTotal: 0,
                                 isCustomer: true, iinOrBin: "123456789123", phone: "+77777777777", email: "mail@mail.kz")
         } catch {
             XCTFail("Ошибка при создании Ticket: \(error)")
         }
         
         do {
-            ticketItem1 = try TicketItem(nameTicketItem: "Самагон", sectionCode: "1", quantity: 1000, measureUnitCode: .piece,
-                                         billsPrice: 1904, coinsPrice: 0,
-                                         isTicketItemTax: false, tax: nil, billsTax: nil, coinsTax: nil,
-                                         isTicketItemDiscount: false, discountName: nil, billsDiscount: nil, coinsDiscount: nil,
+            ticketItem1 = try TicketItem(nameTicketItem: "Игрушка SuperMan", sectionCode: "1", quantity: 1000, measureUnitCode: .piece,
+                                         billsPrice: 1000, coinsPrice: 0,
+                                         isTicketItemTax: true, tax: 12000, billsTax: 96, coinsTax: 43,
+                                         isTicketItemDiscount: true, discountName: "Акция -10%", billsDiscount: 100, coinsDiscount: 0,
+                                         dataMatrix: nil, barcode: "12345678")
+            ticketItem2 = try TicketItem(nameTicketItem: "Игрушка SuperMan", sectionCode: "1", quantity: 1000, measureUnitCode: .piece,
+                                         billsPrice: 1000, coinsPrice: 0,
+                                         isTicketItemTax: true, tax: 12000, billsTax: 96, coinsTax: 43,
+                                         isTicketItemDiscount: true, discountName: "Акция -10%", billsDiscount: 100, coinsDiscount: 0,
+                                         dataMatrix: nil, barcode: "12345678")
+            ticketItem3 = try TicketItem(nameTicketItem: "Игрушка SuperMan", sectionCode: "1", quantity: 1000, measureUnitCode: .piece,
+                                         billsPrice: 1000, coinsPrice: 0,
+                                         isTicketItemTax: true, tax: 12000, billsTax: 96, coinsTax: 43,
+                                         isTicketItemDiscount: true, discountName: "Акция -10%", billsDiscount: 100, coinsDiscount: 0,
                                          dataMatrix: nil, barcode: "12345678")
         } catch {
             XCTFail("Ошибка при создании ticketItem1: \(error)")
@@ -103,13 +118,21 @@ class OfdConnectorTests: XCTestCase {
         
         var ticketItems: [TicketItem] = []
         
-        if let item = ticketItem1 {
-            ticketItems.append(item)
+        if let item1 = ticketItem1 {
+            ticketItems.append(item1)
+        }
+        
+        if let item2 = ticketItem2 {
+            ticketItems.append(item2)
+        }
+        
+        if let item3 = ticketItem3 {
+            ticketItems.append(item3)
         }
         
         do {
             if let ticket = ticket {
-                ticketCpcr = try CommandTicketRequest(ticket: ticket, ticketItems: ticketItems)
+                ticketCpcr = try CommandTicketRequest.createCommandTicketRequestCpcr(ticket: ticket, ticketItems: ticketItems)
             } else {
                 XCTFail("Ticket не был создан должным образом.")
             }
@@ -119,7 +142,7 @@ class OfdConnectorTests: XCTestCase {
         
         do {
             if let ticketCpcr = ticketCpcr {
-                let payload = try ticketCpcr.serializeCommandTicketRequest()
+                let payload = ticketCpcr
                 var fullHeader = header
                 fullHeader.size = UInt32(payload.count + 18)
                 
@@ -138,7 +161,7 @@ class OfdConnectorTests: XCTestCase {
 
                 // Проверяем ответ от сервера
                 let messageResponse = try MessageHeader.fromData(response)
-                let deCommandTicketResponse = try ticketCpcr.deserializeCommandTicketResponse(data: response)
+                let deCommandTicketResponse = try CommandTicketResponse.createCommandTicketResponseCpcr(data: response)
                 
                 print("Заголовок от сервера:\n \(messageResponse)")
                 print("Payload от сервера:\n \(deCommandTicketResponse)")

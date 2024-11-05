@@ -169,7 +169,7 @@ public struct Ticket {
     let email: String?
     /// -------------------------------------------------------------------------------------------
     
-    init(isTicketOnline: Bool,
+    public init(isTicketOnline: Bool,
          offlineTicketNumber: UInt32?,
          offlinePeriodBeginYear: UInt32?,
          offlinePeriodBeginMonth: UInt32?,

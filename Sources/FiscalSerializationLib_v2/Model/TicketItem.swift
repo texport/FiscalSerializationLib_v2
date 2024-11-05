@@ -78,7 +78,7 @@ public struct TicketItem {
     let barcode: String?
     /// -------------------------------------------------------------------------------------------
     
-    init(nameTicketItem: String, sectionCode: String, quantity: UInt32, measureUnitCode: UnitOfMeasurement, billsPrice: UInt64, coinsPrice: UInt32, isTicketItemTax: Bool, tax: UInt32?, billsTax: UInt64?, coinsTax: UInt32?, isTicketItemDiscount: Bool, discountName: String?, billsDiscount: UInt64?, coinsDiscount: UInt32?, dataMatrix: String?, barcode: String?) throws {
+    public init(nameTicketItem: String, sectionCode: String, quantity: UInt32, measureUnitCode: UnitOfMeasurement, billsPrice: UInt64, coinsPrice: UInt32, isTicketItemTax: Bool, tax: UInt32?, billsTax: UInt64?, coinsTax: UInt32?, isTicketItemDiscount: Bool, discountName: String?, billsDiscount: UInt64?, coinsDiscount: UInt32?, dataMatrix: String?, barcode: String?) throws {
 
         self.nameTicketItem = nameTicketItem
         self.sectionCode = sectionCode

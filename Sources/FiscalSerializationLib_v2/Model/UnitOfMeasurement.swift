@@ -42,14 +42,14 @@ public enum UnitOfMeasurement: String {
     case work = "931"
     case cubicMeter = "113"
     
-    struct Info {
+    public struct Info {
         let nameRus: String
         let nameKaz: String
         let shortRus: String
         let shortKaz: String
     }
     
-    var info: Info {
+    public var info: Info {
         switch self {
         case .piece: return Info(nameRus: "Штука", nameKaz: "Дана", shortRus: "шт", shortKaz: "дана")
         case .kilogram: return Info(nameRus: "Килограмм", nameKaz: "Килограмм", shortRus: "кг", shortKaz: "кг")

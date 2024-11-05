@@ -144,7 +144,7 @@ final class CommandTicketRequest {
         }
         
         let money = Money()
-        try ticketCpcr.amounts = createAmounts(payments: ticketCpcr.payments, total: money.createMoney(bills: ticket.billsTotal, coins: ticket.coinsTotal), taken: self.taken, discount: discount)
+        try ticketCpcr.amounts = Amounts().createAmounts(payments: ticketCpcr.payments, total: money.createMoney(bills: ticket.billsTotal, coins: ticket.coinsTotal), taken: self.taken, discount: discount)
         
         if isCustomer {
             let phone = ticket.phone
@@ -284,62 +284,6 @@ final class CommandTicketRequest {
         throw NSError(domain: "InvalidOperationType", code: 1, userInfo: [NSLocalizedDescriptionKey: "Недопустимый код типа операции. Допустимые значения: 0 (Покупка), 1 (Возврат покупки), 2 (Продажа), 3 (Возврат продажи)"])
     }
     
-    // MARK: Amounts - Общий итог ticket(чека)
-    // Метод создает сущность для протокола Kkm_Proto_TicketRequest.Amounts
-    private func createAmounts(payments: [Kkm_Proto_TicketRequest.Payment],
-                               total: Kkm_Proto_Money,
-                               taken: Kkm_Proto_Money?,
-                               discount: Kkm_Proto_TicketRequest.Modifier?) throws -> Kkm_Proto_TicketRequest.Amounts {
-        guard payments.count > 0 else {
-            throw NSError(domain: "InvalidAmountsPayments", code: 1, userInfo: [NSLocalizedDescriptionKey: "Не может быть такой ситуации, когда нет платежей вообще, в payments пусто"])
-        }
-        
-        // Проверка: если есть единственный тип оплаты наличными и только он
-        let onlyCashPayment = payments.count == 1 && payments.first?.type == .paymentCash
-        
-        // Если чек полностью оплачен наличными, сумма должна быть передана
-        if onlyCashPayment {
-            guard taken != nil else {
-                throw NSError(domain: "InvalidAmounts", code: 2, userInfo: [NSLocalizedDescriptionKey: "При оплате только наличными должна быть указана полученная сумма (taken)."])
-            }
-        }
-        
-        var amounts = Kkm_Proto_TicketRequest.Amounts()
-        
-        // Устанавливаем общую сумму
-        amounts.total = total
-        
-        // Устанавливаем полученную сумму, если она есть
-        if let taken = taken {
-            amounts.taken = taken
-            
-            // Рассчитываем сдачу, если чек полностью оплачен наличными
-            if onlyCashPayment {
-                var changeBills = (taken.bills >= total.bills) ? (taken.bills - total.bills) : 0
-                var changeCoins = (taken.coins >= total.coins) ? (taken.coins - total.coins) : 0
-                
-                // Учитываем пересчет монет в купюры, если нужно
-                if taken.coins < total.coins && taken.bills > 0 {
-                    changeCoins = (taken.coins + 100) - total.coins
-                    changeBills -= 1
-                }
-                
-                // Если сумма сдачи равна нулю, все равно создаем объект со сдачей 0
-                var calculatedChange = Kkm_Proto_Money()
-                calculatedChange.bills = changeBills
-                calculatedChange.coins = changeCoins
-                amounts.change = calculatedChange
-            }
-        }
-        
-        // Устанавливаем скидку, если она есть
-        if let discount = discount {
-            amounts.discount = discount
-        }
-        
-        return amounts
-    }
-
     // MARK: Discount - создаем и считаем скидки на весь чек
     private func createDiscount() throws -> Kkm_Proto_TicketRequest.Modifier? {
         /// Если скидка на весь чек, то пытаемся ее собрать

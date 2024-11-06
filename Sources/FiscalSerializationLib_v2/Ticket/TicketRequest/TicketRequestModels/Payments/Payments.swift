@@ -47,57 +47,42 @@ struct Payments {
     /// - Returns: Массив объектов `Kkm_Proto_TicketRequest.Payment`
     func createPayments() throws -> [Kkm_Proto_TicketRequest.Payment] {
         // Проверка: хотя бы один из типов оплаты должен быть установлен и равен true
-        guard (isCard) || (isCash) || (isMobile) else {
+        guard isCard || isCash || isMobile else {
             throw NSError(domain: "createPayments", code: 1, userInfo: [NSLocalizedDescriptionKey: "Должен быть указан хотя бы один способ оплаты (наличные, карта или мобильный платеж)."])
         }
         
         var payments: [Kkm_Proto_TicketRequest.Payment] = []
         
-        // Если расчет не наличными, проверяем, что данные по наличным платежам отсутствуют
-        if !isCash {
-            guard billsCashSum == nil, coinsCashSum == nil else {
-                throw NSError(domain: "createPayments", code: 2, userInfo: [NSLocalizedDescriptionKey: "Если расчет не наличными, то данные по наличным платежам должны быть nil."])
-            }
-            // Ошибка, если данные по наличным присутствуют, но расчет не наличными
-            throw NSError(domain: "createPayments", code: 3, userInfo: [NSLocalizedDescriptionKey: "Данные по наличным платежам указаны, но расчет не наличными."])
-        }
+        // Валидация отсутствующих данных для каждого типа оплаты, если они не используются
+        try validatePaymentDetails(isEnabled: isCash, billsSum: billsCashSum, coinsSum: coinsCashSum, paymentType: "наличными")
+        try validatePaymentDetails(isEnabled: isCard, billsSum: billsCardSum, coinsSum: coinsCardSum, paymentType: "картой")
+        try validatePaymentDetails(isEnabled: isMobile, billsSum: billsMobileSum, coinsSum: coinsMobileSum, paymentType: "мобильным платежом")
         
-        // Создание платежа наличными, если он используется
+        // Создание платежей в зависимости от выбранного типа оплаты
         if isCash {
             let cashPayment = try CashPayment(billsCashSum: billsCashSum, coinsCashSum: coinsCashSum).createCashPayment()
             payments.append(cashPayment)
         }
         
-        // Если расчет не картой, проверяем, что данные по картам отсутствуют
-        if !isCard {
-            guard billsCardSum == nil, coinsCardSum == nil else {
-                throw NSError(domain: "createPayments", code: 4, userInfo: [NSLocalizedDescriptionKey: "Если расчет не картой, то данные по картам должны быть nil."])
-            }
-            // Ошибка, если данные по картам присутствуют, но расчет не картой
-            throw NSError(domain: "createPayments", code: 5, userInfo: [NSLocalizedDescriptionKey: "Данные по оплате картой указаны, но расчет не картой."])
-        }
-        
-        // Создание платежа картой, если он используется
         if isCard {
             let cardPayment = try CardPayment(billsCardSum: billsCardSum, coinsCardSum: coinsCardSum).createCardPayment()
             payments.append(cardPayment)
         }
         
-        // Если расчет не мобильным платежом, проверяем, что данные по мобильным платежам отсутствуют
-        if !isMobile {
-            guard billsMobileSum == nil, coinsMobileSum == nil else {
-                throw NSError(domain: "PaymentError", code: 10, userInfo: [NSLocalizedDescriptionKey: "Если расчет не мобильным платежом, то данные по мобильным платежам должны быть nil."])
-            }
-            // Ошибка, если данные по мобильным платежам присутствуют, но расчет не мобильным
-            throw NSError(domain: "PaymentError", code: 11, userInfo: [NSLocalizedDescriptionKey: "Данные по мобильному платежу указаны, но расчет не мобильным."])
-        }
-        
-        // Создание мобильного платежа, если он используется
         if isMobile {
             let mobilePayment = try MobilePayment(billsMobileSum: billsMobileSum, coinsMobileSum: coinsMobileSum).createMobilePayment()
             payments.append(mobilePayment)
         }
         
         return payments
+    }
+    
+    // Вспомогательный метод для валидации данных оплаты
+    private func validatePaymentDetails(isEnabled: Bool, billsSum: UInt64?, coinsSum: UInt32?, paymentType: String) throws {
+        if !isEnabled {
+            guard billsSum == nil, coinsSum == nil else {
+                throw NSError(domain: "createPayments", code: 2, userInfo: [NSLocalizedDescriptionKey: "Если расчет не \(paymentType), то данные по \(paymentType) должны быть nil."])
+            }
+        }
     }
 }

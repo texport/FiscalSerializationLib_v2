@@ -30,4 +30,5 @@ struct Money {
 
         return money
     }
+    // TODO: Сделать автоматически пересчет из coins в bills если coins > 99
 }

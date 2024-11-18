@@ -9,20 +9,10 @@ import XCTest
 @testable import FiscalSerializationLib_v2
 
 class OfdConnectorTests: XCTestCase {
-
-    // Данные для тестирования
-    let serverIP = "37.150.215.187" // Замените на настоящий IP-адрес сервера
-    let serverPort: UInt16 = 7777
-    
-    // Формирование заголовка
-    let header = MessageHeader(
-        appCode: 0x81A2,
-        version: UInt16(202), // версия 2.0.2
-        size: 0, // размер будет вычислен позже
-        id: UInt32(200956),
-        token: UInt32(3103531874),
-        reqNum: UInt16(31)
-    )
+    let id: UInt32 = 200956
+    let token: UInt32 = 1276489898
+    let reqNum: UInt16 = 36
+    let serverOfd = OfdEnum.kazakhtelecom.getPlatformInfo(for: .test)
     
     func testSendCommandInfoToOfd() {
         // Сериализация команды CommandInfo
@@ -32,24 +22,19 @@ class OfdConnectorTests: XCTestCase {
             // Сериализуем команду и получаем Payload
             let payload = try commandInfo.serializeCommandInfo()
 
-            // Обновляем размер сообщения
-            var fullHeader = header
-            fullHeader.size = UInt32(payload.count + 18) // 18 байт на заголовок
-
-            // Сериализуем заголовок
-            let headerData = fullHeader.toData()
-
-            try print(MessageHeader.fromData(headerData))
+            let header = MessageHeader.toData(id: id, token: token, reqNum: reqNum, payload: payload)
+            
+            try print(MessageHeader.fromData(header))
             
             // Формируем полное сообщение (header + payload)
             var message = Data()
-            message.append(headerData)
+            message.append(header)
             message.append(payload)
 
             print("Полное сообщение (hex) перед отправкой: \(message.map { String(format: "%02hhx", $0) }.joined())")
 
             // Отправляем сообщение на сервер
-            let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverIP, serverPort: serverPort)
+            let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverOfd.ip, serverPort: serverOfd.port)
             print("Полное сообщение (hex) от сервера: \(response.map { String(format: "%02hhx", $0) }.joined())")
 
             // Проверяем ответ от сервера
@@ -63,7 +48,6 @@ class OfdConnectorTests: XCTestCase {
             print("Payload от сервера:\n \(deComandInfo)")
             // В зависимости от специфики протокола можно добавить больше проверок
             XCTAssert(!response.isEmpty, "Ответ от сервера пустой")
-
         } catch {
             XCTFail("Ошибка при отправке данных в ОФД: \(error)")
         }
@@ -143,25 +127,22 @@ class OfdConnectorTests: XCTestCase {
         do {
             if let ticketCpcr = ticketCpcr {
                 let payload = ticketCpcr
-                var fullHeader = header
-                fullHeader.size = UInt32(payload.count + 18)
-                
-                // Сериализуем заголовок
-                let headerData = fullHeader.toData()
+                let header = MessageHeader.toData(id: id, token: token, reqNum: reqNum, payload: payload)
                 
                 // Формируем полное сообщение (header + payload)
                 var message = Data()
-                message.append(headerData)
+                message.append(header)
                 message.append(payload)
 
                 print("Полное сообщение (hex): \(message.map { String(format: "%02hhx", $0) }.joined())")
 
                 // Отправляем сообщение на сервер
-                let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverIP, serverPort: serverPort)
-
+                let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverOfd.ip, serverPort: serverOfd.port)
+                print("Сообщение от сервера:\n \(response), длинна сообщения: \(response.count)")
+                
                 // Проверяем ответ от сервера
                 let messageResponse = try MessageHeader.fromData(response)
-                let deCommandTicketResponse = try CommandTicketResponse.createCommandTicketResponseCpcr(data: response)
+                let deCommandTicketResponse = try CommandTicketResponse.getTicketResponse(ofdName: .kazakhtelecom, data: response)
                 
                 print("Заголовок от сервера:\n \(messageResponse)")
                 print("Payload от сервера:\n \(deCommandTicketResponse)")

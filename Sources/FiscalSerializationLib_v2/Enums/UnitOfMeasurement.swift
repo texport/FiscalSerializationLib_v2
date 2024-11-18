@@ -7,6 +7,20 @@
 
 import Foundation
 
+/// Перечисление `UnitOfMeasurement` представляет собой список единиц измерения, используемых при работе с контрольно-кассовой машиной.
+///
+/// ### Описание:
+/// Это перечисление включает в себя кодовые значения единиц измерения, соответствующие стандартам Республики Казахстан.
+/// Значения используются для передачи информации о товарах и услугах в системе фискальных данных.
+///
+/// ### Примеры использования:
+/// ```swift
+/// let unit = UnitOfMeasurement.kilogram
+/// print(unit.rawValue) // "116"
+/// let info = unit.info
+/// print(info.nameRus) // "Килограмм"
+/// print(info.shortKaz) // "кг"
+/// ```
 public enum UnitOfMeasurement: String {
     case piece = "796"
     case kilogram = "116"
@@ -42,6 +56,13 @@ public enum UnitOfMeasurement: String {
     case work = "931"
     case cubicMeter = "113"
     
+    /// Структура `Info` предоставляет дополнительную информацию о единице измерения.
+    ///
+    /// Включает:
+    /// - `nameRus`: Полное название на русском языке.
+    /// - `nameKaz`: Полное название на казахском языке.
+    /// - `shortRus`: Краткое обозначение на русском языке.
+    /// - `shortKaz`: Краткое обозначение на казахском языке.
     public struct Info {
         let nameRus: String
         let nameKaz: String
@@ -49,6 +70,16 @@ public enum UnitOfMeasurement: String {
         let shortKaz: String
     }
     
+    /// Свойство `info` возвращает структуру `Info`, содержащую полное и краткое название единицы измерения на русском и казахском языках.
+    ///
+    /// - Returns: Экземпляр структуры `Info` с данными о единице измерения.
+    ///
+    /// ### Пример использования:
+    /// ```swift
+    /// let unitInfo = UnitOfMeasurement.kilogram.info
+    /// print(unitInfo.nameRus) // "Килограмм"
+    /// print(unitInfo.shortKaz) // "кг"
+    /// ```
     public var info: Info {
         switch self {
         case .piece: return Info(nameRus: "Штука", nameKaz: "Дана", shortRus: "шт", shortKaz: "дана")

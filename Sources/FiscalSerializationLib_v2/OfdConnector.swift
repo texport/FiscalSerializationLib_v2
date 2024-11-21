@@ -19,6 +19,9 @@ class OfdConnector {
         let socket = try createSocket()
         print("Socket создан: \(socket)")
 
+        // Устанавливаем тайм-аут на отправку и получение данных
+        try setSocketTimeouts(socket: socket)
+        
         try connectToServer(socket: socket, serverIP: serverIP, serverPort: serverPort)
         print("Подключение к серверу \(serverIP):\(serverPort) выполнено")
 
@@ -60,14 +63,14 @@ class OfdConnector {
         }
     }
     
+    // Установка общего тайм-аута на отправку и получение данных (7 секунд)
     private func setSocketTimeouts(socket: Int32) throws {
-        var timeout = timeval(tv_sec: 5, tv_usec: 0) // Таймаут 5 секунд
-        if setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size)) < 0 {
-            throw NSError(domain: "SocketTimeout", code: 5, userInfo: [NSLocalizedDescriptionKey: "Не удалось установить таймаут для чтения"])
-        }
-        
-        if setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size)) < 0 {
-            throw NSError(domain: "SocketTimeout", code: 6, userInfo: [NSLocalizedDescriptionKey: "Не удалось установить таймаут для записи"])
+        var timeout = timeval(tv_sec: 7, tv_usec: 0) // Тайм-аут 7 секунд
+        let receiveTimeoutResult = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
+        let sendTimeoutResult = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
+
+        if receiveTimeoutResult < 0 || sendTimeoutResult < 0 {
+            throw NSError(domain: "SocketTimeout", code: 5, userInfo: [NSLocalizedDescriptionKey: "Не удалось установить тайм-аут на отправку и получение данных"])
         }
     }
 
@@ -83,11 +86,31 @@ class OfdConnector {
 
     // Получение ответа от сервера
     private func receiveMessage(socket: Int32) throws -> Data {
+        var data = Data()
         var buffer = [UInt8](repeating: 0, count: 1024)
-        let receivedBytes = recv(socket, &buffer, buffer.count, 0)
-        if receivedBytes == -1 {
-            throw NSError(domain: "ReceiveError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Не удалось получить ответ от сервера"])
+
+        while true {
+            let receivedBytes = recv(socket, &buffer, buffer.count, 0)
+            
+            // Если произошла ошибка при чтении
+            if receivedBytes == -1 {
+                throw NSError(domain: "ReceiveError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Не удалось получить ответ от сервера"])
+            }
+            
+            // Если сервер закрыл соединение или больше нет данных
+            if receivedBytes == 0 {
+                break
+            }
+            
+            data.append(buffer, count: receivedBytes)
+            
+            // Если данных меньше, чем размер буфера, значит, чтение завершено
+            if receivedBytes < buffer.count {
+                break
+            }
         }
-        return Data(buffer.prefix(receivedBytes))
+
+        print("Полный ответ от сервера получен: \(data as NSData)")
+        return data
     }
 }

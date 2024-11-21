@@ -39,11 +39,20 @@ class OfdConnectorTests: XCTestCase {
 
             // Проверяем ответ от сервера
             let messageResponse = try MessageHeader.fromData(response)
-            print("funcCommandInfo Header: \(messageResponse)")
             let deComandInfo = try commandInfo.deserializeCommandInfoResponse(data: response)
             
-            print("Заголовок от сервера:\n \(messageResponse)")
+            print("\(deComandInfo)")
+            let serviceResponse = try ServiceResponse(serviceResponse: deComandInfo.service)
+            
             print("Payload от сервера:\n \(deComandInfo)")
+            
+            if let ads = serviceResponse.ads {
+                for item in ads {
+                    print("--------------------------------------\nЯ буду печатать каждый рекламный текст:\n \(item)\n--------------------------------------")
+                }
+            } else {
+                print("Рекламные тексты отсутствуют.")
+            }
             
             // В зависимости от специфики протокола можно добавить больше проверок
             XCTAssert(!response.isEmpty, "Ответ от сервера пустой")

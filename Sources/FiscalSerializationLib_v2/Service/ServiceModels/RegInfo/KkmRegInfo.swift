@@ -74,12 +74,12 @@ struct KkmRegInfo {
         guard !kkmRegInfoResponse.fnsKkmID.isEmpty else {
             throw NSError(domain: "createKkmRegInfoResponse", code: 1, userInfo: [NSLocalizedDescriptionKey: "ОФД НАРУШИЛ ПРОТОКОЛ: В ответе от ОФД был получен пустой КГД ID(Регистрационный номер КГД). Обратитесь в службу поддержки ОФД."])
         }
-            
+        
         // Проверка: Серийный номер не должен быть пустым
         guard !kkmRegInfoResponse.serialNumber.isEmpty else {
             throw NSError(domain: "createKkmRegInfoResponse", code: 2, userInfo: [NSLocalizedDescriptionKey: "ОФД НАРУШИЛ ПРОТОКОЛ: В ответе от ОФД был получен пустой Серийный номер ККМ. Обратитесь в службу поддержки ОФД."])
         }
-            
+        
         // Проверка: ID ОФД не должен быть пустым
         guard !kkmRegInfoResponse.kkmID.isEmpty else {
             throw NSError(domain: "createKkmRegInfoResponse", code: 3, userInfo: [NSLocalizedDescriptionKey: "ОФД НАРУШИЛ ПРОТОКОЛ: В ответе от ОФД был получен пустой KKM ID(Системный идентификатор ККМ в ОФД). Обратитесь в службу поддержки ОФД."])

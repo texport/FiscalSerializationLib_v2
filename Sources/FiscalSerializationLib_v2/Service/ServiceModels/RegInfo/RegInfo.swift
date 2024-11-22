@@ -7,19 +7,80 @@
 
 import Foundation
 
-/// Структура `RegInfo` предоставляет методы для обработки регистрационной информации, возвращаемой сервером оператора фискальных данных (ОФД).
+/// Структура `RegInfo` предоставляет методы для обработки и формирования регистрационной информации.
 ///
-/// Основная задача структуры — преобразовать ответ от сервера в удобный для использования формат, проверяя корректность и обязательность данных.
-/// В случае ошибок метод выбрасывает `NSError` с подробным описанием проблемы.
+/// Основные задачи структуры:
+/// - Преобразование ответа от сервера оператора фискальных данных (ОФД) в удобный для использования формат.
+/// - Формирование запросов с регистрационной информацией для передачи на сервер ОФД.
+/// - Проверка корректности и обязательности данных в соответствии с требованиями протокола.
 ///
-/// ### Основные задачи:
-/// - Обработка регистрационной информации о кассовом аппарате (`KkmRegInfo`).
-/// - Обработка информации о торговой точке (`PosRegInfo`).
-/// - Обработка информации об организации (`OrgRegInfo`).
+/// ### Основные функции:
+/// - Создание запросов для передачи информации о кассовом аппарате и организации.
+/// - Обработка данных, полученных от сервера, включая:
+///   - Регистрационную информацию о кассовом аппарате (`KkmRegInfo`).
+///   - Информацию о торговой точке (`PosRegInfo`).
+///   - Информацию об организации (`OrgRegInfo`).
 ///
-/// Все данные проверяются на соответствие требованиям протокола перед передачей разработчику.
+/// ### Исключения:
+/// В случае ошибок структура выбрасывает `NSError` с подробным описанием проблемы.
+/// Все данные проверяются на соответствие требованиям протокола перед передачей разработчику или серверу.
 struct RegInfo {
-
+    
+    /// Создает объект запроса `Kkm_Proto_ServiceRequest.RegInfo`, объединяющий информацию о кассе и организации.
+    ///
+    /// - Parameters:
+    ///   - kgdId: Регистрационный номер КГД.
+    ///   - kkmOfdId: Системный идентификатор кассового аппарата в ОФД.
+    ///   - kkmSerialNumber: Серийный номер кассового аппарата.
+    ///   - title: Название организации.
+    ///   - address: Адрес организации.
+    ///   - iinOrBin: ИИН или БИН организации.
+    ///   - oked: Код экономической деятельности (ОКЭД).
+    ///
+    /// - Throws:
+    ///   - `NSError`, если данные для создания запроса некорректны или отсутствуют.
+    ///
+    /// - Returns: Объект `Kkm_Proto_ServiceRequest.RegInfo`, готовый для отправки.
+    static func createRegInfoRequest(kgdId: String, kkmOfdId: String, kkmSerialNumber: String, title: String, address: String, iinOrBin: String, oked: String) throws -> Kkm_Proto_ServiceRequest.RegInfo {
+        var regInfo = Kkm_Proto_ServiceRequest.RegInfo()
+        
+        regInfo.kkm = try setupKkmRegInfoRequest(kgdId: kgdId, kkmOfdId: kkmOfdId, kkmSerialNumber: kkmSerialNumber)
+        regInfo.org = try setupOrgRegInfoRequest(title: title, address: address, iinOrBin: iinOrBin, oked: oked)
+        
+        return regInfo
+    }
+    
+    /// Создает информацию о кассовом аппарате (`KkmRegInfo`) для запроса.
+    ///
+    /// - Parameters:
+    ///   - kgdId: Регистрационный номер КГД.
+    ///   - kkmOfdId: Системный идентификатор кассового аппарата в ОФД.
+    ///   - kkmSerialNumber: Серийный номер кассового аппарата.
+    ///
+    /// - Throws:
+    ///   - `NSError`, если данные для создания информации о кассовом аппарате некорректны.
+    ///
+    /// - Returns: Объект `Kkm_Proto_KkmRegInfo`, готовый для использования в запросе.
+    private static func setupKkmRegInfoRequest(kgdId: String, kkmOfdId: String, kkmSerialNumber: String) throws -> Kkm_Proto_KkmRegInfo {
+        try KkmRegInfo.createKkmRegInfoRequest(kgdId: kgdId, kkmOfdId: kkmOfdId, kkmSerialNumber: kkmSerialNumber)
+    }
+    
+    /// Создает информацию об организации (`OrgRegInfo`) для запроса.
+    ///
+    /// - Parameters:
+    ///   - title: Название организации.
+    ///   - address: Адрес организации.
+    ///   - iinOrBin: ИИН или БИН организации.
+    ///   - oked: Код экономической деятельности (ОКЭД).
+    ///
+    /// - Throws:
+    ///   - `NSError`, если данные для создания информации об организации некорректны.
+    ///
+    /// - Returns: Объект `Kkm_Proto_OrgRegInfo`, готовый для использования в запросе.
+    private static func setupOrgRegInfoRequest(title: String, address: String, iinOrBin: String, oked: String) throws -> Kkm_Proto_OrgRegInfo {
+        try OrgRegInfo.createOrgRegInfoRequest(title: title, address: address, iinOrBin: iinOrBin, oked: oked)
+    }
+    
     /// Создает объект ответа `RegInfoResponse`, объединяющий информацию о кассе, торговой точке и организации.
     ///
     /// - Parameters:

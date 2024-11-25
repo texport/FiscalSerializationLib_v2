@@ -19,6 +19,9 @@ class OfdConnector {
         let socket = try createSocket()
         print("Socket создан: \(socket)")
 
+        // Устанавливаем тайм-аут на отправку и получение данных
+        try setSocketTimeouts(socket: socket)
+        
         try connectToServer(socket: socket, serverIP: serverIP, serverPort: serverPort)
         print("Подключение к серверу \(serverIP):\(serverPort) выполнено")
 
@@ -60,14 +63,14 @@ class OfdConnector {
         }
     }
     
+    // Установка общего тайм-аута на отправку и получение данных (7 секунд)
     private func setSocketTimeouts(socket: Int32) throws {
-        var timeout = timeval(tv_sec: 5, tv_usec: 0) // Таймаут 5 секунд
-        if setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size)) < 0 {
-            throw NSError(domain: "SocketTimeout", code: 5, userInfo: [NSLocalizedDescriptionKey: "Не удалось установить таймаут для чтения"])
-        }
-        
-        if setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size)) < 0 {
-            throw NSError(domain: "SocketTimeout", code: 6, userInfo: [NSLocalizedDescriptionKey: "Не удалось установить таймаут для записи"])
+        var timeout = timeval(tv_sec: 7, tv_usec: 0) // Тайм-аут 7 секунд
+        let receiveTimeoutResult = setsockopt(socket, SOL_SOCKET, SO_RCVTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
+        let sendTimeoutResult = setsockopt(socket, SOL_SOCKET, SO_SNDTIMEO, &timeout, socklen_t(MemoryLayout<timeval>.size))
+
+        if receiveTimeoutResult < 0 || sendTimeoutResult < 0 {
+            throw NSError(domain: "SocketTimeout", code: 5, userInfo: [NSLocalizedDescriptionKey: "Не удалось установить тайм-аут на отправку и получение данных"])
         }
     }
 
@@ -83,11 +86,44 @@ class OfdConnector {
 
     // Получение ответа от сервера
     private func receiveMessage(socket: Int32) throws -> Data {
-        var buffer = [UInt8](repeating: 0, count: 1024)
-        let receivedBytes = recv(socket, &buffer, buffer.count, 0)
-        if receivedBytes == -1 {
-            throw NSError(domain: "ReceiveError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Не удалось получить ответ от сервера"])
+        // Читаем заголовок (первые 18 байт)
+        var headerBuffer = [UInt8](repeating: 0, count: 18)
+        let headerBytes = recv(socket, &headerBuffer, headerBuffer.count, 0)
+        
+        if headerBytes < 18 {
+            throw NSError(domain: "ReceiveError", code: 4, userInfo: [NSLocalizedDescriptionKey: "Не удалось получить полный заголовок сообщения"])
         }
-        return Data(buffer.prefix(receivedBytes))
+        
+        // Десериализуем заголовок
+        let headerData = Data(headerBuffer)
+        let header = try MessageHeader.fromData(headerData)
+        print("Прочитан заголовок:", header)
+        
+        // Извлекаем полный размер сообщения из заголовка
+        let totalSize = Int(header.size)
+        let payloadSize = totalSize - 18
+        
+        // Создаем буфер для всей полезной нагрузки
+        var messageData = Data(headerData) // Начинаем с заголовка
+        var payloadBuffer = [UInt8](repeating: 0, count: payloadSize)
+        var totalBytesRead = 0
+        
+        // Читаем оставшуюся полезную нагрузку
+        while totalBytesRead < payloadSize {
+            let remainingBytes = payloadSize - totalBytesRead
+            let bytesRead = recv(socket, &payloadBuffer[totalBytesRead], remainingBytes, 0)
+            
+            if bytesRead <= 0 {
+                throw NSError(domain: "ReceiveError", code: 5, userInfo: [NSLocalizedDescriptionKey: "Ошибка при чтении полезной нагрузки. Данных не достаточно."])
+            }
+            
+            totalBytesRead += bytesRead
+        }
+        
+        // Добавляем прочитанную полезную нагрузку к сообщению
+        messageData.append(payloadBuffer, count: totalBytesRead)
+        
+        return messageData
     }
+
 }

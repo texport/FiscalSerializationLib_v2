@@ -103,4 +103,48 @@ struct DateTime {
         
         return time
     }
+    
+    /// Создает объект `Date` из протокольного объекта `Kkm_Proto_DateTime`
+    /// - Parameter dateTimeCpcr: Протокольный объект `Kkm_Proto_DateTime`, содержащий дату и время
+    /// - Throws: Генерирует ошибку, если дата выходит за пределы последних 5 лет
+    /// - Returns: Объект `Date`, объединяющий дату и время
+    static func createDateSwiftType(dateTimeCpcr: Kkm_Proto_DateTime) throws -> Date {
+        let year = Int(dateTimeCpcr.date.year)
+        let month = Int(dateTimeCpcr.date.month)
+        let day = Int(dateTimeCpcr.date.day)
+        
+        let hour = Int(dateTimeCpcr.time.hour)
+        let minute = Int(dateTimeCpcr.time.minute)
+        let second = Int(dateTimeCpcr.time.second)
+        
+        var dateComponents = DateComponents()
+        dateComponents.year = year
+        dateComponents.month = month
+        dateComponents.day = day
+        dateComponents.hour = hour
+        dateComponents.minute = minute
+        dateComponents.second = second
+        
+        let calendar = Calendar.current
+        
+        guard let date = calendar.date(from: dateComponents) else {
+            throw NSError(
+                domain: "InvalidDateTime",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Дата или время некорректны. Проверьте значения."]
+            )
+        }
+        
+        let currentDate = Date()
+        guard let fiveYearsAgo = calendar.date(byAdding: .year, value: -5, to: currentDate),
+              date >= fiveYearsAgo else {
+            throw NSError(
+                domain: "InvalidDateTime",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Дата должна быть не ранее чем 5 лет назад."]
+            )
+        }
+        
+        return date
+    }
 }

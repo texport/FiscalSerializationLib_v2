@@ -28,6 +28,7 @@ final class ZXReportResponseBuilder {
         var totalResultResponse: [ZXReportOperationResponse]?
         var taxes: [ZXReportTaxResponse]?
         var startShiftNonNullableSums: [ZXReportNonNullableSumResponse]?
+        var ticketOperations: [ZXReportTicketOperationResponse]?
         var nonNullableSums: [ZXReportNonNullableSumResponse]?
         
         let dateTimeResponse = try setupDateTime()
@@ -69,6 +70,10 @@ final class ZXReportResponseBuilder {
             startShiftNonNullableSums = try setupStartShiftNonNullableSums()
         }
         
+        if zXReportCpcr.ticketOperations.count >= 1 {
+            ticketOperations = try setupTicketOperations()
+        }
+        
         if zXReportCpcr.nonNullableSums.count >= 1 {
             nonNullableSums = try setupNonNullableSums()
         }
@@ -83,6 +88,7 @@ final class ZXReportResponseBuilder {
                                 totalResult: totalResultResponse,
                                 taxes: taxes,
                                 startShiftNonNullableSums: startShiftNonNullableSums,
+                                ticketOperations: ticketOperations,
                                 nonNullableSums: nonNullableSums)
     }
     
@@ -138,6 +144,10 @@ final class ZXReportResponseBuilder {
     private func setupNonNullableSums() throws -> [ZXReportNonNullableSumResponse] {
         try ZXReportNonNullableSums.createZXReportNonNullableSumsResponse(zXReportNonNullableSumsCpcr: zXReportCpcr.nonNullableSums)
     }
+    
+    private func setupTicketOperations() throws -> [ZXReportTicketOperationResponse] {
+        try ZXReportTicketOperations.createZXReportTicketOperationsResponse(zXReportTicketOperationsCpcr: zXReportCpcr.ticketOperations)
+    }
 }
 
 public struct ZXReportResponse {
@@ -151,5 +161,6 @@ public struct ZXReportResponse {
     public let totalResult: [ZXReportOperationResponse]?
     public let taxes: [ZXReportTaxResponse]?
     public let startShiftNonNullableSums: [ZXReportNonNullableSumResponse]?
+    public let ticketOperations: [ZXReportTicketOperationResponse]?
     public let nonNullableSums: [ZXReportNonNullableSumResponse]?
 }

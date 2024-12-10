@@ -11,6 +11,9 @@ public enum ZXReportErrorEnum: LocalizedError {
     case missingTaxOperationResponse
     case notValideTaxOperationTypeResponse
     case notValideNonNullableSum
+    case notValidePaymentTypeResponse
+    case missingTicketOperationResponse
+    case notValideTicketOperationTypeResponse
     
     public var code: Int {
         switch self {
@@ -20,6 +23,12 @@ public enum ZXReportErrorEnum: LocalizedError {
             return 2
         case .notValideNonNullableSum:
             return 3
+        case .notValidePaymentTypeResponse:
+            return 4
+        case .missingTicketOperationResponse:
+            return 5
+        case .notValideTicketOperationTypeResponse:
+            return 6
         }
     }
     
@@ -31,6 +40,12 @@ public enum ZXReportErrorEnum: LocalizedError {
             return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе типов операций налогов ОФД прислал тип операций которого нет в перечислении. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
         case .notValideNonNullableSum:
             return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе необнуляемых сумм ОФД прислал тип операций которого нет в перечислении. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
+        case .notValidePaymentTypeResponse:
+            return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе платежи ОФД прислал тип платежа которого нет в перечислении. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
+        case .missingTicketOperationResponse:
+            return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе чеков отсутствует информация об операциях. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
+        case .notValideTicketOperationTypeResponse:
+            return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе чеков ОФД прислал тип операций которого нет в перечислении. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
         }
     }
 }

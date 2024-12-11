@@ -29,6 +29,9 @@ final class ZXReportResponseBuilder {
         var taxes: [ZXReportTaxResponse]?
         var startShiftNonNullableSums: [ZXReportNonNullableSumResponse]?
         var ticketOperations: [ZXReportTicketOperationResponse]?
+        var moneyPlacements: [ZXReportMoneyPlacementResponse]?
+        var cashSum: Double
+        var revenue: ZXReportRevenueResponse
         var nonNullableSums: [ZXReportNonNullableSumResponse]?
         
         let dateTimeResponse = try setupDateTime()
@@ -74,6 +77,14 @@ final class ZXReportResponseBuilder {
             ticketOperations = try setupTicketOperations()
         }
         
+        if zXReportCpcr.moneyPlacements.count >= 1 {
+            moneyPlacements = try setupMoneyPlacements()
+        }
+        
+        cashSum = Money.toDouble(protoMoney: zXReportCpcr.cashSum)
+        
+        revenue = try ZXReportRevenue.createZXReportRevenueResponse(zXReportRevenueCpcr: zXReportCpcr.revenue)
+        
         if zXReportCpcr.nonNullableSums.count >= 1 {
             nonNullableSums = try setupNonNullableSums()
         }
@@ -89,8 +100,13 @@ final class ZXReportResponseBuilder {
                                 taxes: taxes,
                                 startShiftNonNullableSums: startShiftNonNullableSums,
                                 ticketOperations: ticketOperations,
+                                moneyPlacements: moneyPlacements,
+                                cashSum: cashSum,
+                                revenue: revenue,
                                 nonNullableSums: nonNullableSums)
     }
+    
+    #warning("checksum - сейчас ОФД КТ и прото файлы нарушают протокол, согласно прото файлам ОФД может не прислать контрольную сумму.")
     
     private func setupDateTime() throws -> Date {
         try DateTime.createDateSwiftType(dateTimeCpcr: zXReportCpcr.dateTime)
@@ -148,6 +164,10 @@ final class ZXReportResponseBuilder {
     private func setupTicketOperations() throws -> [ZXReportTicketOperationResponse] {
         try ZXReportTicketOperations.createZXReportTicketOperationsResponse(zXReportTicketOperationsCpcr: zXReportCpcr.ticketOperations)
     }
+    
+    private func setupMoneyPlacements() throws -> [ZXReportMoneyPlacementResponse] {
+        try ZXReportMoneyPlacements.createZXReportMoneyPlacementsResponse(zXReportMoneyPlacementsCpcr: zXReportCpcr.moneyPlacements)
+    }
 }
 
 public struct ZXReportResponse {
@@ -162,5 +182,8 @@ public struct ZXReportResponse {
     public let taxes: [ZXReportTaxResponse]?
     public let startShiftNonNullableSums: [ZXReportNonNullableSumResponse]?
     public let ticketOperations: [ZXReportTicketOperationResponse]?
+    public let moneyPlacements: [ZXReportMoneyPlacementResponse]?
+    public let cashSum: Double
+    public let revenue: ZXReportRevenueResponse
     public let nonNullableSums: [ZXReportNonNullableSumResponse]?
 }

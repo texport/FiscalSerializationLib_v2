@@ -14,6 +14,8 @@ public enum ZXReportErrorEnum: LocalizedError {
     case notValidePaymentTypeResponse
     case missingTicketOperationResponse
     case notValideTicketOperationTypeResponse
+    case missingMoneyPalcementOperationResponse
+    case notValideMoneyPalcementOperationTypeResponse
     
     public var code: Int {
         switch self {
@@ -29,6 +31,10 @@ public enum ZXReportErrorEnum: LocalizedError {
             return 5
         case .notValideTicketOperationTypeResponse:
             return 6
+        case .missingMoneyPalcementOperationResponse:
+            return 7
+        case .notValideMoneyPalcementOperationTypeResponse:
+            return 8
         }
     }
     
@@ -46,6 +52,10 @@ public enum ZXReportErrorEnum: LocalizedError {
             return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе чеков отсутствует информация об операциях. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
         case .notValideTicketOperationTypeResponse:
             return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе чеков ОФД прислал тип операций которого нет в перечислении. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
+        case .missingMoneyPalcementOperationResponse:
+            return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе внесения/изъятия денег отсутствует информация об операциях. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
+        case .notValideMoneyPalcementOperationTypeResponse:
+            return "Ошибка разбора Z/X-отчёта от сервера ОФД: в разделе типов операций внесения/изъятия денег ОФД прислал тип операций которого нет в перечислении. Такое поведение сервера некорректно и нарушает установленный протокол обмена данными. Пожалуйста, обратитесь в службу поддержки ОФД для устранения проблемы."
         }
     }
 }

@@ -12,6 +12,15 @@ import Foundation
 /// гарантируя, что передаваемые значения корректны.
 struct Money {
     
+    /// Преобразует объект `Kkm_Proto_Money` в значение типа `Double`
+    /// - Parameter protoMoney: Объект `Kkm_Proto_Money`
+    /// - Returns: Значение в формате "тенге.тиыны" с двумя знаками после запятой
+    static func toDouble(protoMoney: Kkm_Proto_Money) -> Double {
+        let bills = Double(protoMoney.bills)
+        let coins = Double(protoMoney.coins) / 100.0
+        return bills + coins
+    }
+    
     /// Создает объект `Kkm_Proto_Money` с проверкой допустимых значений
     /// - Parameters:
     ///   - bills: Сумма в целых единицах (не должна быть отрицательной)

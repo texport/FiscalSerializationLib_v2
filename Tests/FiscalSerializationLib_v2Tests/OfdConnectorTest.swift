@@ -9,10 +9,13 @@ import XCTest
 @testable import FiscalSerializationLib_v2
 
 class OfdConnectorTests: XCTestCase {
-    let id: UInt32 = 200956
-    let token: UInt32 = 1276489898
-    let reqNum: UInt16 = 36
+    let id: UInt32 = 201129
+    let token: UInt32 = 28430364
+    let reqNum: UInt16 = 9
     let serverOfd = OfdEnum.kazakhtelecom.getPlatformInfo(for: .test)
+    // id: 200956
+    // id: 200360
+    // token:
     
     func testSendCommandInfoToOfd() {
         // Сериализация команды CommandInfo
@@ -31,29 +34,29 @@ class OfdConnectorTests: XCTestCase {
             message.append(header)
             message.append(payload)
 
-            print("Полное сообщение (hex) перед отправкой: \(message.map { String(format: "%02hhx", $0) }.joined())")
+            //print("Полное сообщение (hex) перед отправкой: \(message.map { String(format: "%02hhx", $0) }.joined())")
 
             // Отправляем сообщение на сервер
             let response = try OfdConnector.shared.sendToServer(message: message, serverIP: serverOfd.ip, serverPort: serverOfd.port)
-            print("Полное сообщение (hex) от сервера: \(response.map { String(format: "%02hhx", $0) }.joined())")
+            //print("Полное сообщение (hex) от сервера: \(response.map { String(format: "%02hhx", $0) }.joined())")
 
             // Проверяем ответ от сервера
-            let messageResponse = try MessageHeader.fromData(response)
             let deComandInfo = try commandInfo.deserializeCommandInfoResponse(data: response)
             
-            print("\(deComandInfo)")
+            print("Payload от сервера полный:\n \(deComandInfo)")
+            
+            let zXReportResponse = try ZXReportResponseBuilder.createZXReportResponse(from: deComandInfo.report.zxReport)
+            print("--------------------------------------\nЭто отчет в виде библиотеки:\n--------------------------------------")
+            dump(zXReportResponse)
+            print("--------------------------------------")
+            
+            // Проверяем мою сервисную часть для CommandInfo
             let serviceResponse = try ServiceResponse(serviceResponse: deComandInfo.service)
+            print("--------------------------------------\nЭто сервисная часть в виде библиотеки:\n--------------------------------------")
+            dump(serviceResponse)
+            print("--------------------------------------")
             
-            print("Payload от сервера:\n \(deComandInfo)")
-            
-            if let ads = serviceResponse.ads {
-                for item in ads {
-                    print("--------------------------------------\nЯ буду печатать каждый рекламный текст:\n--------------------------------------\n\(item)\n--------------------------------------")
-                }
-            } else {
-                print("Рекламные тексты отсутствуют.")
-            }
-            
+            //print("--------------------------------------\nЭто сервисная часть в виде библиотеки:\n--------------------------------------\n\(serviceResponse)\n--------------------------------------")
             // В зависимости от специфики протокола можно добавить больше проверок
             XCTAssert(!response.isEmpty, "Ответ от сервера пустой")
         } catch {

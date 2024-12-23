@@ -14,12 +14,15 @@ final class CommandTicketResponse {
     private var ticketResponseCpcr: Kkm_Proto_Response?
     
     // Какую команду вернул ОФД
-    private var command: UInt32?
-    private var commandText: String?
+//    private var command: UInt32?
+//    private var commandText: String?
+    
+    private var command: CommandResponse
     
     // Результаты отправки чека
-    private var resultCode: UInt32?
-    private var resultText: String?
+//    private var resultCode: UInt32?
+//    private var resultText: String?
+    private var result: ResultResponse
     
     // Фискальный признак
     private var ticketNumberOfd: String?
@@ -75,39 +78,35 @@ final class CommandTicketResponse {
     
     // MARK: Command
     private func setupCommand() throws {
-        let (command, commandText) = try createCommandTicket(command: ticketResponseCpcr?.command)
-        self.command = command
-        self.commandText = commandText
+        command = try createCommandTicket(command: ticketResponseCpcr?.command)
     }
     
-    private func createCommandTicket(command: Kkm_Proto_CommandTypeEnum?) throws -> (UInt32, String) {
+    private func createCommandTicket(command: Kkm_Proto_CommandTypeEnum?) throws -> CommandResponse {
         guard let command = command else {
             throw NSError(domain: "createCommandTicket", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "От ОФД получен пустой код команды. ОФД нарушил протокол. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы , время попытки отправки транзакции, сообщите что код команды от ОФД пустой."])
         }
         
-        return try Command.createCommand(command: command)
+        return try Command.createCommandResponse(commandCpcr: command)
     }
     
     // MARK: Result
     private func setupResult() throws {
-        let (resultCode, resultText) = try createTicketResult(result: ticketResponseCpcr?.result)
-        self.resultCode = resultCode
-        self.resultText = resultText
+        result = try createTicketResult(result: ticketResponseCpcr?.result)
     }
 
-    private func createTicketResult(result: Kkm_Proto_Result?) throws -> (UInt32, String) {
+    private func createTicketResult(result: Kkm_Proto_Result?) throws -> ResultResponse {
         guard let result = result else {
             throw NSError(domain: "createTicketResult", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "От ОФД получен пустой код ответа. ОФД нарушил протокол. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы , время попытки отправки транзакции, сообщите что код ответа от ОФД пустой."])
         }
         
-        return try Result.createResult(result: result)
+        return try Result.createResultResponse(result: result)
     }
 
     // MARK: TicketNumber
     private func setupTicketNumberOfd() throws {
-        if command == 1, resultCode == 0 {
+        if command.command == 1, result.resultCode == 0 {
             guard let ticketNumber = ticketResponseCpcr?.ticket.ticketNumber else {
                 throw NSError(domain: "CommandTicketResponse", code: 1, userInfo: [
                     NSLocalizedDescriptionKey: "ОФД отправил код команды 0, но нарушил протокол и не отправил фискальный признак. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы, время попытки отправки чека, сообщите что ОФД не передал фискальный признак, но чек принял."])
@@ -123,7 +122,7 @@ final class CommandTicketResponse {
     
     // MARK: UrlTicketOfd
     private func setupUrlTicketOfd() throws {
-        if command == 1, resultCode == 0 {
+        if command.command == 1, result.resultCode == 0 {
             guard let urlTicketOfd = ticketResponseCpcr?.ticket.qrCode else {
                 throw NSError(domain: "CommandTicketResponse", code: 1, userInfo: [
                     NSLocalizedDescriptionKey: "ОФД отправил код команды 0, но нарушил протокол и не отправил ссылку на чек. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы, время попытки отправки чека, сообщите что ОФД не передал ссылку на чек."])

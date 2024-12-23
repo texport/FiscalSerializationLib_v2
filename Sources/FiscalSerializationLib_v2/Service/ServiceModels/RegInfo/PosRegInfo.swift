@@ -45,6 +45,6 @@ struct PosRegInfo {
             )
         }
         
-        return PosRegInfoResponse(title: posRegInfoResponse.title, address: posRegInfoResponse.address)
+        return PosRegInfoResponse.create(with: (title: posRegInfoResponse.title, address: posRegInfoResponse.address))
     }
 }

@@ -5,7 +5,16 @@
 //  Created by Sergey Ivanov on 19.11.2024.
 //
 
-struct PosRegInfoResponse {
-    let title: String
-    let address: String
+public struct PosRegInfoResponse: InternalConstructible {
+    public let title: String
+    public let address: String
+    
+    private init(title: String, address: String) {
+        self.title = title
+        self.address = address
+    }
+    
+    static func create(with data: (title: String, address: String)) -> PosRegInfoResponse {
+        PosRegInfoResponse(title: data.0, address: data.1)
+    }
 }

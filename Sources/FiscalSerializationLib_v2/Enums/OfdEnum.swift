@@ -46,23 +46,19 @@ public enum OfdEnum: String {
     /// ```
     ///
     /// - Note: Для `production` сервера IP-адрес может быть изменён в будущем по мере получения актуальных данных.
-    public func getPlatformInfo(for platform: Platforms) -> (ip: String, port: UInt16, domain: String, description: String) {
+    public func getPlatformInfo(for platform: Platforms) -> OFD {
         switch (self, platform) {
         case (.kazakhtelecom, .test):
-            return (
-                ip: "37.150.215.187",
-                port: 7777,
-                domain: "",
-                description: "Казахтелеком - Сервер для производителей ККМ (тестовый)."
-            )
+            return OFD.create(with: (ip: "37.150.215.187",
+                                     port: 7777,
+                                     domain: "",
+                                     description: "Казахтелеком - Сервер для производителей ККМ (тестовый)."))
         // TODO: Получить IP-адрес из интернета для продуктовой площадки Казахтелеком
         case (.kazakhtelecom, .production):
-            return (
-                ip: "10.8.29.11",
-                port: 7777,
-                domain: "",
-                description: "Казахтелеком - Сервер для налогоплательщиков (боевой)."
-            )
+            return OFD.create(with: (ip: "10.8.29.11",
+                                     port: 7777,
+                                     domain: "",
+                                     description: "Казахтелеком - Сервер для налогоплательщиков (боевой)."))
         }
     }
 }

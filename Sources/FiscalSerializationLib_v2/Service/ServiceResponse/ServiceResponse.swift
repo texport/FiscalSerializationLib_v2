@@ -20,24 +20,29 @@ import Foundation
 ///
 /// ### Особенности:
 /// Если ответ содержит данные, но они не соответствуют требованиям протокола, выбрасывается `NSError`.
-class ServiceResponse {
+class ServiceResponseBuilder {
     
     /// Сырой ответ от ОФД.
     private let serviceResponse: Kkm_Proto_ServiceResponse
     
     /// Рекламные тексты, возвращённые ОФД. Может быть пустым массивом, если данных нет.
-    var ads: [String]?
+    private var ads: [String]?
     
     /// Регистрационная информация о кассе, торговой точке и организации. Может быть `nil`, если данные отсутствуют.
-    var kkm: RegInfoResponse?
+    private var kkm: RegInfoResponse?
     
     /// Инициализирует объект на основе ответа от ОФД.
     ///
     /// - Parameter serviceResponse: Объект ответа `Kkm_Proto_ServiceResponse`.
     /// - Throws: Ошибка, если данные некорректны или отсутствуют обязательные поля.
-    init(serviceResponse: Kkm_Proto_ServiceResponse) throws {
+    private init(serviceResponse: Kkm_Proto_ServiceResponse) throws {
         self.serviceResponse = serviceResponse
-        try setupServiceResponse()
+        //try setupServiceResponse()
+    }
+    
+    static func createServiceResponse(from serviceResponseCpcr: Kkm_Proto_ServiceResponse) throws -> ServiceResponse {
+        let builder = try ServiceResponseBuilder(serviceResponse: serviceResponseCpcr)
+        return try builder.setupServiceResponse()
     }
     
     /// Настраивает данные из ответа сервера.
@@ -46,13 +51,15 @@ class ServiceResponse {
     /// Если регистрационная информация отсутствует, она не будет установлена.
     ///
     /// - Throws: Ошибка, если данные некорректны.
-    private func setupServiceResponse() throws {
+    private func setupServiceResponse() throws -> ServiceResponse {
         try setupAdsResponse()
         
         // TODO: Считаю что это временное решение, ОФД работает с багами, ОФД в случае если передает сервисную часть всегда должен передавать RegInfo
         if serviceResponse.hasRegInfo {
             try setupRegInfoResponse()
         }
+        
+        return ServiceResponse.create(with: (kkm, ads))
     }
     
     // MARK: Рекламные тексты
@@ -89,5 +96,19 @@ class ServiceResponse {
     private func setupRegInfoResponse() throws {
         let regInfoResponseCpcr = serviceResponse.regInfo
         kkm = try RegInfo.createRegInfoResponse(regInfoResponse: regInfoResponseCpcr)
+    }
+}
+
+public struct ServiceResponse: InternalConstructible {
+    public let regInfoResponse: RegInfoResponse?
+    public let ads: [String]?
+    
+    private init(regInfoResponse: RegInfoResponse?, ads: [String]?) {
+        self.regInfoResponse = regInfoResponse
+        self.ads = ads
+    }
+    
+    static func create(with data: (regInfoResponse: RegInfoResponse?, ads: [String]?)) -> ServiceResponse {
+        ServiceResponse(regInfoResponse: data.0, ads: data.1)
     }
 }

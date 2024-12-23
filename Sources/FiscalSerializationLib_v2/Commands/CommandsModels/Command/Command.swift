@@ -28,8 +28,8 @@ struct Command {
     /// - Throws:
     ///   - Ошибка с кодом `1`, если код команды не соответствует протоколу ОФД.
     ///   - Ошибка с кодом `2`, если код команды допустим по протоколу, но не был распознан библиотекой.
-    static func createCommand(command: Kkm_Proto_CommandTypeEnum) throws -> (UInt32, String) {
-        let commandCpcr = command.rawValue
+    static func createCommandResponse(commandCpcr: Kkm_Proto_CommandTypeEnum) throws -> CommandResponse {
+        let commandCpcr = commandCpcr.rawValue
         
         // Проверка на соответствие команды протоколу
         guard let _ = Kkm_Proto_CommandTypeEnum(rawValue: Int(commandCpcr)) else {
@@ -38,7 +38,7 @@ struct Command {
                 code: 1,
                 userInfo: [NSLocalizedDescriptionKey: """
                     Полученный код команды от ОФД не соответствует протоколу. \
-                    Обратитесь в службу поддержки ОФД, предоставив идентификатор кассы и код команды: \(command).
+                    Обратитесь в службу поддержки ОФД, предоставив идентификатор кассы и код команды: \(commandCpcr).
                     """]
             )
         }
@@ -55,6 +55,20 @@ struct Command {
             )
         }
         
-        return (command.rawValue, command.description)
+        return CommandResponse.create(with: (command.rawValue, command.description))
+    }
+}
+
+public struct CommandResponse: InternalConstructible {
+    public let command: UInt32
+    public let commandText: String
+    
+    private init(command: UInt32, commandText: String) {
+        self.command = command
+        self.commandText = commandText
+    }
+    
+    static func create(with data: (UInt32, String)) -> CommandResponse {
+        CommandResponse(command: data.0, commandText: data.1)
     }
 }

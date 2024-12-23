@@ -5,20 +5,20 @@
 //  Created by Sergey Ivanov on 06.11.2024.
 //
 
-public struct TicketResponse {
-    private let ofdName: OfdEnum
-    private let idKkmOfd: UInt32
-    private let tokenOfd: UInt32
-    private let reqNumOfd: UInt16
+public struct TicketResponse: InternalConstructible {
+    public let ofdName: OfdEnum
+    public let idKkmOfd: UInt32
+    public let tokenOfd: UInt32
+    public let reqNumOfd: UInt16
     
-    private let command: UInt32
-    private let commandText: String
+    public let command: UInt32
+    public let commandText: String
     
-    private let resultCode: UInt32
-    private let resultText: String
+    public let resultCode: UInt32
+    public let resultText: String
     
-    private let fiscalSign: String?
-    private let urlTicketOfd: String?
+    public let fiscalSign: String?
+    public let urlTicketOfd: String?
     
     init(ofdName: OfdEnum, idKkmOfd: UInt32, tokenOfd: UInt32, reqNumOfd: UInt16,
          command: UInt32, commandText: String,

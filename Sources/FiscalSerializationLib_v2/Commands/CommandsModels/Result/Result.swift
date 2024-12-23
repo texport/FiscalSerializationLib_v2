@@ -27,7 +27,7 @@ struct Result {
     /// - Throws:
     ///   - Ошибка с кодом `1`, если код ответа не соответствует протоколу ОФД.
     ///   - Ошибка с кодом `2`, если код ответа допустим по протоколу, но не распознан библиотекой.
-    static func createResult(result: Kkm_Proto_Result) throws -> (UInt32, String) {
+    static func createResultResponse(result: Kkm_Proto_Result) throws -> ResultResponse {
         let resultCodeCpcr = result.resultCode
         
         // Проверка на соответствие кода ответа протоколу
@@ -54,7 +54,20 @@ struct Result {
             )
         }
         
-        return (resultCode.rawValue, resultCode.description)
+        return ResultResponse.create(with: (resultCode.rawValue, resultCode.description))
     }
 }
 
+public struct ResultResponse: InternalConstructible {
+    public let resultCode: UInt32
+    public let resultText: String
+    
+    private init(resultCode: UInt32, resultText: String) {
+        self.resultCode = resultCode
+        self.resultText = resultText
+    }
+    
+    static func create(with data: (UInt32, String)) -> ResultResponse {
+        ResultResponse(resultCode: data.0, resultText: data.1)
+    }
+}

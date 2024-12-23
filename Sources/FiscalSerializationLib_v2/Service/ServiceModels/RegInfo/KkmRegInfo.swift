@@ -85,8 +85,8 @@ struct KkmRegInfo {
             throw NSError(domain: "createKkmRegInfoResponse", code: 3, userInfo: [NSLocalizedDescriptionKey: "ОФД НАРУШИЛ ПРОТОКОЛ: В ответе от ОФД был получен пустой KKM ID(Системный идентификатор ККМ в ОФД). Обратитесь в службу поддержки ОФД."])
         }
         
-        return KkmRegInfoResponse(kgdId: kkmRegInfoResponse.fnsKkmID,
-                                  serialNumber: kkmRegInfoResponse.serialNumber,
-                                  kkmOfdId: kkmRegInfoResponse.kkmID)
+        return KkmRegInfoResponse.create(with: (kkmRegInfoResponse.fnsKkmID,
+                                                kkmRegInfoResponse.serialNumber,
+                                                kkmRegInfoResponse.kkmID))
     }
 }

@@ -1,73 +1,37 @@
-//
-//  Result.swift
-//  FiscalSerializationLib_v2
-//
-//  Created by Sergey Ivanov on 06.11.2024.
-//
-
-import Foundation
-
-/// Внутренняя структура `Result`, используемая для обработки кодов ответов, возвращаемых сервером оператора фискальных данных (ОФД).
+/// Структура `Result` используется для обработки и интерпретации кодов ответов,
+/// возвращаемых сервером оператора фискальных данных (ОФД).
 ///
-/// Структура предназначена для интерпретации кодов ответа, полученных от сервера ОФД, и возвращает соответствующий код и описание.
-/// Данная структура используется только для внутренней логики библиотеки и недоступна внешним пользователям.
+/// ### Основные задачи:
+/// - Проверка соответствия кода ответа протоколу.
+/// - Интерпретация кода ответа и предоставление описания.
+///
+/// Данная структура применяется только для внутренней логики библиотеки и недоступна внешним пользователям.
 ///
 /// ### Возможные ошибки:
-/// - **Код ошибки 1**: Если код ответа, полученный от ОФД, не соответствует протоколу.
-/// - **Код ошибки 2**: Если код ответа допустим по протоколу, но не распознан библиотекой.
+/// - **CommandResultCodeError (Код ошибки 1)**: Код ответа не соответствует установленному протоколу.
+/// - **CommandResultCodeLibError (Код ошибки 2)**: Код ответа соответствует протоколу, но не распознан библиотекой.
 struct Result {
-    
-    /// Обрабатывает код ответа, полученный от сервера ОФД.
+    /// Создает объект `ResultResponse` на основе кода ответа, полученного от сервера.
     ///
     /// - Parameters:
     ///   - result: Объект `Kkm_Proto_Result`, содержащий код ответа от сервера.
-    ///
-    /// - Returns: Кортеж, содержащий код ответа (`UInt32`) и его описание (`String`).
-    ///
+    /// - Returns: Объект `ResultResponse`, содержащий код ответа (`UInt32`) и его описание (`String`).
     /// - Throws:
-    ///   - Ошибка с кодом `1`, если код ответа не соответствует протоколу ОФД.
-    ///   - Ошибка с кодом `2`, если код ответа допустим по протоколу, но не распознан библиотекой.
-    static func createResultResponse(result: Kkm_Proto_Result) throws -> ResultResponse {
-        let resultCodeCpcr = result.resultCode
+    ///   - `CommandsErrorEnum.commandResultCodeError`: Если код ответа не соответствует протоколу ОФД.
+    ///   - `CommandsErrorEnum.commandResultCodeLibError`: Если код ответа допустим, но не распознан библиотекой.
+    static func createResultResponse(resultCpcr: Kkm_Proto_Result) throws -> ResultResponse {
+        let resultCodeCpcr = resultCpcr.resultCode
         
         // Проверка на соответствие кода ответа протоколу
         guard let _ = Kkm_Proto_ResultTypeEnum(rawValue: Int(resultCodeCpcr)) else {
-            throw NSError(
-                domain: "createResult",
-                code: 1,
-                userInfo: [NSLocalizedDescriptionKey: """
-                    Полученный код ответа от ОФД не соответствует протоколу. \
-                    Обратитесь в службу поддержки ОФД, предоставив идентификатор кассы, время попытки и код ответа: \(resultCodeCpcr).
-                    """]
-            )
+            throw CommandsErrorEnum.commandResultCodeError
         }
         
         // Проверка на возможность распознавания кода ответа библиотекой
         guard let resultCode = ResultTypeEnum(rawValue: resultCodeCpcr) else {
-            throw NSError(
-                domain: "createResult",
-                code: 2,
-                userInfo: [NSLocalizedDescriptionKey: """
-                    Код ответа от ОФД допустим по протоколу, но не распознан библиотекой. \
-                    Обратитесь к разработчику библиотеки.
-                    """]
-            )
+            throw CommandsErrorEnum.commandResultCodeLibError
         }
         
         return ResultResponse.create(with: (resultCode.rawValue, resultCode.description))
-    }
-}
-
-public struct ResultResponse: InternalConstructible {
-    public let resultCode: UInt32
-    public let resultText: String
-    
-    private init(resultCode: UInt32, resultText: String) {
-        self.resultCode = resultCode
-        self.resultText = resultText
-    }
-    
-    static func create(with data: (UInt32, String)) -> ResultResponse {
-        ResultResponse(resultCode: data.0, resultText: data.1)
     }
 }

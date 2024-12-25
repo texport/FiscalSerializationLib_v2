@@ -25,7 +25,7 @@ struct CommandInfo {
         let deserializePayloadCommandInfoCpcr = try deserializeCommandInfoResponse(data: commandInfoResponseData)
         
         let command = try Command.createCommandResponse(commandCpcr: deserializePayloadCommandInfoCpcr.command)
-        let result = try Result.createResultResponse(result: deserializePayloadCommandInfoCpcr.result)
+        let result = try Result.createResultResponse(resultCpcr: deserializePayloadCommandInfoCpcr.result)
         
         // сервисная часть от сервера ОФД
         let serviceResponse = try ServiceResponseBuilder.createServiceResponse(from: deserializePayloadCommandInfoCpcr.service)

@@ -1,0 +1,175 @@
+////
+////  CommandTicketResponse.swift
+////  FiscalSerializationLib_v2
+////
+////  Created by Sergey Ivanov on 05.11.2024.
+////
+//
+//import Foundation
+//
+//final class CommandTicketResponseBuilder {
+//    private let ofdName: OfdEnum
+//    private let commandTicketResponseCpcr: Data
+//    private var ticketHeader: MessageHeader?
+//    private var ticketResponseCpcr: Kkm_Proto_Response?
+//    
+//    // Какую команду вернул ОФД
+//    private var command: CommandResponse
+//    
+//    private var result: ResultResponse
+//    
+//    // Фискальный признак
+//    private var ticketNumberOfd: String?
+//    
+//    // Ссылка на чек в ОФД
+//    private var urlTicketOfd: String?
+//    
+//    private init(ofdName: OfdEnum, data: Data) throws {
+//        self.ofdName = ofdName
+//        self.commandTicketResponseCpcr = data
+//        try setupTicketResponse()
+//    }
+//    
+//    static func createTicketResponse(data: Kkm_Proto_Response) throws -> CommandTicketResponse {
+//        let commandTicketResponse = try CommandTicketResponse(ofdName: ofdName, data: data)
+//        return try commandTicketResponse.createTicketResponse()
+//    }
+//    
+//    // MARK: SETUP
+//    private func setupTicketResponse() throws {
+//        try setupKkmProtoResponse()
+//        try setupCommand()
+//        try setupResult()
+//        try setupTicketNumberOfd()
+//        try setupUrlTicketOfd()
+//    }
+//    
+//    // MARK: Десериализация
+//    private func setupKkmProtoResponse() throws {
+//        ticketHeader = try deserializeCommandTicketResponse(data: commandTicketResponseCpcr).0
+//        ticketResponseCpcr = try deserializeCommandTicketResponse(data: commandTicketResponseCpcr).1
+//    }
+//    
+//    private func deserializeCommandTicketResponse(data: Data) throws -> (MessageHeader, Kkm_Proto_Response) {
+//        let headerSize = 18
+//        // Проверяем, что данных достаточно для включения заголовка
+//        guard data.count > headerSize else {
+//            throw NSError(domain: "deserializeCommandTicketResponse", code: 1, userInfo: [NSLocalizedDescriptionKey: "Данных недостаточно"])
+//        }
+//        print(data.count)
+//        
+//        // Отсекаем заголовок
+//        let payloadData = data.subdata(in: headerSize..<data.count)
+//        
+//        // Десериализация header
+//        let header = try MessageHeader.fromData(data)
+//        // Десериализация payload
+//        let response = try Kkm_Proto_Response(serializedBytes: payloadData)
+//        print("deserializeCommandTicketResponse - \(response)")
+//        // Возвращаем десериализованный ответ
+//        return (header, response)
+//    }
+//    
+//    // MARK: Command
+//    private func setupCommand() throws {
+//        command = try createCommandTicket(command: ticketResponseCpcr?.command)
+//    }
+//    
+//    private func createCommandTicket(command: Kkm_Proto_CommandTypeEnum?) throws -> CommandResponse {
+//        guard let command = command else {
+//            throw NSError(domain: "createCommandTicket", code: 1, userInfo: [
+//                NSLocalizedDescriptionKey: "От ОФД получен пустой код команды. ОФД нарушил протокол. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы , время попытки отправки транзакции, сообщите что код команды от ОФД пустой."])
+//        }
+//        
+//        return try Command.createCommandResponse(commandCpcr: command)
+//    }
+//    
+//    // MARK: Result
+//    private func setupResult() throws {
+//        result = try createTicketResult(result: ticketResponseCpcr?.result)
+//    }
+//
+//    private func createTicketResult(result: Kkm_Proto_Result?) throws -> ResultResponse {
+//        guard let result = result else {
+//            throw NSError(domain: "createTicketResult", code: 1, userInfo: [
+//                NSLocalizedDescriptionKey: "От ОФД получен пустой код ответа. ОФД нарушил протокол. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы , время попытки отправки транзакции, сообщите что код ответа от ОФД пустой."])
+//        }
+//        
+//        return try Result.createResultResponse(result: result)
+//    }
+//
+//    // MARK: TicketNumber
+//    private func setupTicketNumberOfd() throws {
+//        if command.command == 1, result.resultCode == 0 {
+//            guard let ticketNumber = ticketResponseCpcr?.ticket.ticketNumber else {
+//                throw NSError(domain: "CommandTicketResponse", code: 1, userInfo: [
+//                    NSLocalizedDescriptionKey: "ОФД отправил код команды 0, но нарушил протокол и не отправил фискальный признак. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы, время попытки отправки чека, сообщите что ОФД не передал фискальный признак, но чек принял."])
+//            }
+//            
+//            ticketNumberOfd = try createTicketNumberOfd(ticketNumber: ticketNumber)
+//        }
+//    }
+//    
+//    private func createTicketNumberOfd(ticketNumber: String) throws -> String {
+//        return try TicketNumber.createTicketNumber(ticketNumber: ticketNumber)
+//    }
+//    
+//    // MARK: UrlTicketOfd
+//    private func setupUrlTicketOfd() throws {
+//        if command.command == 1, result.resultCode == 0 {
+//            guard let urlTicketOfd = ticketResponseCpcr?.ticket.qrCode else {
+//                throw NSError(domain: "CommandTicketResponse", code: 1, userInfo: [
+//                    NSLocalizedDescriptionKey: "ОФД отправил код команды 0, но нарушил протокол и не отправил ссылку на чек. Обратитесь в службу поддержки ОФД. Предоставьте ОФД идентификатор кассы, время попытки отправки чека, сообщите что ОФД не передал ссылку на чек."])
+//            }
+//            
+//            self.urlTicketOfd = try createUrlTicketOfd(urlTicketOfd: urlTicketOfd)
+//        }
+//    }
+//    
+//    private func createUrlTicketOfd(urlTicketOfd: Data) throws -> String {
+//        return try UrlTicketOfd.createUrlTicketOfd(urlTicketOfd: urlTicketOfd)
+//    }
+//    
+//    private func createTicketResponse() throws -> CommandTicketResponse {
+//        guard
+//            let idKkmOfd = ticketHeader?.id,
+//            let tokenOfd = ticketHeader?.token,
+//            let reqNumOfd = ticketHeader?.reqNum,
+//            let command = command,
+//            let commandText = commandText,
+//            let resultCode = resultCode,
+//            let resultText = resultText
+//            else {
+//                throw NSError(domain: "createTicketResponse", code: 1, userInfo: [
+//                    NSLocalizedDescriptionKey: "Не удалось создать TicketResponse. Некоторые обязательные поля не инициализированы."
+//                ])
+//            }
+//        
+//        return TicketResponse(ofdName: ofdName, idKkmOfd: idKkmOfd, tokenOfd: tokenOfd, reqNumOfd: reqNumOfd, command: command, commandText: commandText, resultCode: resultCode, resultText: resultText, fiscalSign: ticketNumberOfd, urlTicketOfd: urlTicketOfd)
+//    }
+//}
+//
+//public struct CommandTicketResponse: InternalConstructible, ResponseProtocol {
+//    public let ofdName: OFD
+//    public let kkm: KKM
+//    
+//    public let command: CommandResponse
+//    
+//    public let result: ResultResponse
+//    
+//    public let fiscalSign: String?
+//    public let urlTicketOfd: String?
+//    
+//    private init(ofdName: OFD, kkm: KKM, command: CommandResponse, result: ResultResponse, fiscalSign: String?, urlTicketOfd: String?) {
+//        self.ofdName = ofdName
+//        self.kkm = kkm
+//        self.command = command
+//        self.result = result
+//        self.fiscalSign = fiscalSign
+//        self.urlTicketOfd = urlTicketOfd
+//    }
+//    
+//    static func create(with data: (OFD, KKM, CommandResponse, ResultResponse, String?, String?)) -> CommandTicketResponse {
+//        CommandTicketResponse(ofdName: data.0, kkm: data.1, command: data.2, result: data.3, fiscalSign: data.4, urlTicketOfd: data.5)
+//    }
+//}

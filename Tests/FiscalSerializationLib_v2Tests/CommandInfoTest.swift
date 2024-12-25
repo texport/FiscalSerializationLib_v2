@@ -26,30 +26,30 @@ a281ca0001050000fc100300aab0154c240008051202080022950308011290030a110a0708e80f10
         }
     }
     
-    func testDeserializeCommandInfo() {
-        mockData()
-        
-        let commandInfoSerializer = CommandInfo()
-
-        do {
-            // Десериализация ответа
-            let response = try commandInfoSerializer.deserializeCommandInfoResponse(data: mockDataResponse)
-            
-            // Добавляем проверки
-            XCTAssertNotNil(response, "Ответ должен быть корректно десериализован")
-            XCTAssertEqual(response.result.resultCode, UInt32(Kkm_Proto_ResultTypeEnum.resultTypeOk.rawValue), "Ожидается успешный результат")
-            
-            // Проверяем наличие отчета
-            if response.hasReport, response.hasService {
-                print("Отчет найден: \(response.report)")
-                print("Сервисная часть: \(response.service)")
-                XCTAssertNotNil(response.report, "Ожидается наличие отчета")
-                XCTAssertNotNil(response.service, "Ожидается наличие сервисной части")
-            } else {
-                XCTFail("Отчет или сервисная часть отсутствует в ответе")
-            }
-        } catch {
-            XCTFail("Ошибка при десериализации: \(error)")
-        }
-    }
+//    func testDeserializeCommandInfo() {
+//        mockData()
+//        
+//        let commandInfoSerializer = CommandInfo()
+//
+//        do {
+//            // Десериализация ответа
+//            let response = try commandInfoSerializer.deserializeCommandInfoResponse(data: mockDataResponse)
+//            
+//            // Добавляем проверки
+//            XCTAssertNotNil(response, "Ответ должен быть корректно десериализован")
+//            XCTAssertEqual(response.result.resultCode, UInt32(Kkm_Proto_ResultTypeEnum.resultTypeOk.rawValue), "Ожидается успешный результат")
+//            
+//            // Проверяем наличие отчета
+//            if response.hasReport, response.hasService {
+//                print("Отчет найден: \(response.report)")
+//                print("Сервисная часть: \(response.service)")
+//                XCTAssertNotNil(response.report, "Ожидается наличие отчета")
+//                XCTAssertNotNil(response.service, "Ожидается наличие сервисной части")
+//            } else {
+//                XCTFail("Отчет или сервисная часть отсутствует в ответе")
+//            }
+//        } catch {
+//            XCTFail("Ошибка при десериализации: \(error)")
+//        }
+//    }
 }

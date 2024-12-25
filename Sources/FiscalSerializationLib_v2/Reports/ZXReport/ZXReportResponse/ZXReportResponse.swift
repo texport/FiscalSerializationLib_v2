@@ -89,21 +89,21 @@ final class ZXReportResponseBuilder {
             nonNullableSums = try setupNonNullableSums()
         }
         
-        return ZXReportResponse(dateTime: dateTimeResponse,
-                                openShiftTime: openShiftTimeResponse,
-                                closeShiftTime: closeShiftTimeResponse,
-                                shiftNumber: shiftNumberResponse,
-                                sections: sectionsResponse,
-                                operations: operationsResponse,
-                                discounts: discountsResponse,
-                                totalResult: totalResultResponse,
-                                taxes: taxes,
-                                startShiftNonNullableSums: startShiftNonNullableSums,
-                                ticketOperations: ticketOperations,
-                                moneyPlacements: moneyPlacements,
-                                cashSum: cashSum,
-                                revenue: revenue,
-                                nonNullableSums: nonNullableSums)
+        return ZXReportResponse.create(with: (dateTime: dateTimeResponse,
+                                              openShiftTime: openShiftTimeResponse,
+                                              closeShiftTime: closeShiftTimeResponse,
+                                              shiftNumber: shiftNumberResponse,
+                                              sections: sectionsResponse,
+                                              operations: operationsResponse,
+                                              discounts: discountsResponse,
+                                              totalResult: totalResultResponse,
+                                              taxes: taxes,
+                                              startShiftNonNullableSums: startShiftNonNullableSums,
+                                              ticketOperations: ticketOperations,
+                                              moneyPlacements: moneyPlacements,
+                                              cashSum: cashSum,
+                                              revenue: revenue,
+                                              nonNullableSums: nonNullableSums))
     }
     
     #warning("checksum - сейчас ОФД КТ и прото файлы нарушают протокол, согласно прото файлам ОФД может не прислать контрольную сумму.")
@@ -170,7 +170,7 @@ final class ZXReportResponseBuilder {
     }
 }
 
-public struct ZXReportResponse {
+public struct ZXReportResponse: InternalConstructible {
     public let dateTime: Date
     public let openShiftTime: Date?
     public let closeShiftTime: Date?
@@ -186,4 +186,26 @@ public struct ZXReportResponse {
     public let cashSum: Double
     public let revenue: ZXReportRevenueResponse
     public let nonNullableSums: [ZXReportNonNullableSumResponse]?
+    
+    private init(dateTime: Date, openShiftTime: Date?, closeShiftTime: Date?, shiftNumber: UInt32, sections: [ZXReportSectionResponse]?, operations: [ZXReportOperationResponse]?, discounts: [ZXReportOperationResponse]?, totalResult: [ZXReportOperationResponse]?, taxes: [ZXReportTaxResponse]?, startShiftNonNullableSums: [ZXReportNonNullableSumResponse]?, ticketOperations: [ZXReportTicketOperationResponse]?, moneyPlacements: [ZXReportMoneyPlacementResponse]?, cashSum: Double, revenue: ZXReportRevenueResponse, nonNullableSums: [ZXReportNonNullableSumResponse]?) {
+        self.dateTime = dateTime
+        self.openShiftTime = openShiftTime
+        self.closeShiftTime = closeShiftTime
+        self.shiftNumber = shiftNumber
+        self.sections = sections
+        self.operations = operations
+        self.discounts = discounts
+        self.totalResult = totalResult
+        self.taxes = taxes
+        self.startShiftNonNullableSums = startShiftNonNullableSums
+        self.ticketOperations = ticketOperations
+        self.moneyPlacements = moneyPlacements
+        self.cashSum = cashSum
+        self.revenue = revenue
+        self.nonNullableSums = nonNullableSums
+    }
+    
+    static func create(with data: (dateTime: Date, openShiftTime: Date?, closeShiftTime: Date?, shiftNumber: UInt32, sections: [ZXReportSectionResponse]?, operations: [ZXReportOperationResponse]?, discounts: [ZXReportOperationResponse]?, totalResult: [ZXReportOperationResponse]?, taxes: [ZXReportTaxResponse]?, startShiftNonNullableSums: [ZXReportNonNullableSumResponse]?, ticketOperations: [ZXReportTicketOperationResponse]?, moneyPlacements: [ZXReportMoneyPlacementResponse]?, cashSum: Double, revenue: ZXReportRevenueResponse, nonNullableSums: [ZXReportNonNullableSumResponse]?)) -> ZXReportResponse {
+        ZXReportResponse(dateTime: data.0, openShiftTime: data.1, closeShiftTime: data.2, shiftNumber: data.3, sections: data.4, operations: data.5, discounts: data.6, totalResult: data.7, taxes: data.8, startShiftNonNullableSums: data.9, ticketOperations: data.10, moneyPlacements: data.11, cashSum: data.12, revenue: data.13, nonNullableSums: data.14)
+    }
 }

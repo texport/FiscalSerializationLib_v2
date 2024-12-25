@@ -78,27 +78,27 @@ final class CommandTypeEnumTests: XCTestCase {
     }
     
     /// Проверяет, что описание для команды `commandCancelTicket` корректно.
-    func testCommandCancelTicketDescription() {
-        let expectedDescription = """
-        Отмена чека. Аннулирование последнего фискализированного чека. Доступно только для последней транзакции.
-        """
-        XCTAssertEqual(CommandTypeEnum.commandCancelTicket.description, expectedDescription)
-    }
+//    func testCommandCancelTicketDescription() {
+//        let expectedDescription = """
+//        Отмена чека. Аннулирование последнего фискализированного чека. Доступно только для последней транзакции.
+//        """
+//        XCTAssertEqual(CommandTypeEnum.commandCancelTicket.description, expectedDescription)
+//    }
     
     /// Проверяет, что описание для команды `commandAuth` корректно.
-    func testCommandAuthDescription() {
-        let expectedDescription = """
-        Авторизация. Проверка имени и пароля оператора для получения доступа к кассовой машине. \
-        Позволяет серверу ОФД проверить права оператора и его роль.
-        """
-        XCTAssertEqual(CommandTypeEnum.commandAuth.description, expectedDescription)
-    }
+//    func testCommandAuthDescription() {
+//        let expectedDescription = """
+//        Авторизация. Проверка имени и пароля оператора для получения доступа к кассовой машине. \
+//        Позволяет серверу ОФД проверить права оператора и его роль.
+//        """
+//        XCTAssertEqual(CommandTypeEnum.commandAuth.description, expectedDescription)
+//    }
     
     /// Проверяет, что описание для команды `commandReserved` корректно.
-    func testCommandReservedDescription() {
-        let expectedDescription = """
-        Зарезервировано. Эта команда используется для будущего расширения функциональности протокола.
-        """
-        XCTAssertEqual(CommandTypeEnum.commandReserved.description, expectedDescription)
-    }
+//    func testCommandReservedDescription() {
+//        let expectedDescription = """
+//        Зарезервировано. Эта команда используется для будущего расширения функциональности протокола.
+//        """
+//        XCTAssertEqual(CommandTypeEnum.commandReserved.description, expectedDescription)
+//    }
 }

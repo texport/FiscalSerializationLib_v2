@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 10.12.2024.
 //
 
-public struct ZXReportTicketOperationPaymentResponse: InternalConstructible {
+public struct ZXReportTicketOperationPaymentResponse: InternalConstructible, Encodable {
     public let payment: PaymentTypeEnum
     public let sum: Double
     public let count: UInt32

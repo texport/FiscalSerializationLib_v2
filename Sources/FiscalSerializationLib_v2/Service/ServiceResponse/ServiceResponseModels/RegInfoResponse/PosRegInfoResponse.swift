@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 19.11.2024.
 //
 
-public struct PosRegInfoResponse: InternalConstructible {
+public struct PosRegInfoResponse: InternalConstructible, Encodable {
     public let title: String
     public let address: String
     

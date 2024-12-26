@@ -1,30 +1,26 @@
-//
-//  CommandInfo.swift
-//  FiscalSerializationLib_v2
-//
-//  Created by Sergey Ivanov on 24.09.2024.
-//
-
 import SwiftProtobuf
 import Foundation
 
 struct CommandInfo {
-    static func createCommandInfoRequestCpcr(commandInfo: CommandInfoRequest, kkm: KKM) throws -> Data {
+    private static let headerSize = 18
+    
+    static func createCommandInfoRequestCpcr(commandInfo: CommandInfoRequest, kkmUserToServer: KKM) throws -> Data {
         let payloadCpcr = try serializeCommandInfo(commandInfo: commandInfo)
-        let headerCpcr = MessageHeader.toData(id: kkm.idKkm, token: kkm.tokenKkm, reqNum: kkm.reqNum, payload: payloadCpcr)
-        var messageCpcr = Data()
-        messageCpcr.append(headerCpcr)
-        messageCpcr.append(payloadCpcr)
-        
-        return messageCpcr
+        let headerCpcr = MessageHeader.toData(id: kkmUserToServer.idKkm, token: kkmUserToServer.tokenKkm, reqNum: kkmUserToServer.reqNum, payload: payloadCpcr)
+        return headerCpcr + payloadCpcr	
     }
     
-    static func createCommandInfoResponse(ofd: OFD, kkm: KKM, commandInfoResponseData: Data) throws -> CommandInfoResponse {
-        // декодируем то что получили
-        let deserializeHeaderCommandInfo = try MessageHeader.fromData(commandInfoResponseData)
+    static func createCommandInfoResponse(ofd: OFD, kkmUserToServer: KKM, commandInfoResponseData: Data) throws -> CommandInfoResponse {
+        /// Создаем сущность ККМ которую прислал нам сервер ОФД
+        let kkmServerToUser = try MessageHeader.fromData(commandInfoResponseData).toKKM()
+        
+        /// Разбераем Payload от сервера ОФД
         let deserializePayloadCommandInfoCpcr = try deserializeCommandInfoResponse(data: commandInfoResponseData)
         
+        /// Создаем команду
         let command = try Command.createCommandResponse(commandCpcr: deserializePayloadCommandInfoCpcr.command)
+        	
+        /// Создаем результат обработки
         let result = try Result.createResultResponse(resultCpcr: deserializePayloadCommandInfoCpcr.result)
         
         // сервисная часть от сервера ОФД
@@ -33,7 +29,7 @@ struct CommandInfo {
         // часть по отчетам от сервера ОФД
         let zXReportResponse = try ZXReportResponseBuilder.createZXReportResponse(from: deserializePayloadCommandInfoCpcr.report.zxReport)
         
-        return CommandInfoResponse.create(with: (ofd, kkm, command, result, serviceResponse, zXReportResponse))
+        return CommandInfoResponse.create(with: (ofd, kkmUserToServer, kkmServerToUser, command, result, serviceResponse, zXReportResponse))
     }
     
     // Сериализация команды COMMAND_INFO
@@ -47,19 +43,14 @@ struct CommandInfo {
     
     // Десериализация ответа на команду COMMAND_INFO
     private static func deserializeCommandInfoResponse(data: Data) throws -> Kkm_Proto_Response {
-        let headerSize = 18
         // Проверяем, что данных достаточно для включения заголовка
         guard data.count > headerSize else {
-            throw NSError(domain: "CommandInfoDeserializer", code: 2, userInfo: [NSLocalizedDescriptionKey: "Данных недостаточно"])
+            throw CommandsErrorEnum.commandLengthMessageError
         }
         
         // Отсекаем заголовок
         let payloadData = data.subdata(in: headerSize..<data.count)
         
-        // Десериализация данных
-        let response = try Kkm_Proto_Response(serializedBytes: payloadData)
-        
-        // Возвращаем десериализованный ответ
-        return response
+        return try Kkm_Proto_Response(serializedBytes: payloadData)
     }
 }

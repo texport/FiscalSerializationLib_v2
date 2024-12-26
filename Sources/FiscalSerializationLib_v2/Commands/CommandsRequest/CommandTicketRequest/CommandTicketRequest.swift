@@ -8,33 +8,34 @@
 import Foundation
 
 /// - Ticket - это структура конструктор, с помощью которой вы можете создать чек.
-public struct Ticket {
+public struct CommandTicketRequest: CommandProtocol, RequestProtocol {
+    public private(set) var commandCode = CommandTypeEnum.commandTicket
     /// -------------------------------------------------------------------------------------------
     /// - isTicketOnline - чек фискализируется в онлайн режиме или в оффлайн режиме(автономном).
     /// Если чек ранее уже пытался отправляться в ОФД, но не был доставлен
     /// то ставим false, иначе ставим true. Если isTicketOnline = false, параметр offlineTicketNumber обязателен к заполнению.
-    let isTicketOnline: Bool
+    public let isTicketOnline: Bool
     /// - offlineTicketNumber - если isTicketOnline = false, то этот параметр обязателен к заполнению. Этот параметр
     /// обозначается как Автономный фискальный признак, его нужно генерировать самостоятельно. На данном этапе вам
     /// нужно будет написать свой генератор фискальных признаков.
     // TODO: рассмотреть возможность создания своего генератора автономных фискальных признаков
-    let offlineTicketNumber: UInt32?
+    public let offlineTicketNumber: UInt32?
     
-    let offlinePeriodBeginYear: UInt32?
-    let offlinePeriodBeginMonth: UInt32?
-    let offlinePeriodBeginDay: UInt32?
+    public let offlinePeriodBeginYear: UInt32?
+    public let offlinePeriodBeginMonth: UInt32?
+    public let offlinePeriodBeginDay: UInt32?
     
-    let offlinePeriodBeginHour: UInt32?
-    let offlinePeriodBeginMinute: UInt32?
-    let offlinePeriodBeginSecond: UInt32?
+    public let offlinePeriodBeginHour: UInt32?
+    public let offlinePeriodBeginMinute: UInt32?
+    public let offlinePeriodBeginSecond: UInt32?
     
-    let offlinePeriodEndYear: UInt32?
-    let offlinePeriodEndMonth: UInt32?
-    let offlinePeriodEndDay: UInt32?
+    public let offlinePeriodEndYear: UInt32?
+    public let offlinePeriodEndMonth: UInt32?
+    public let offlinePeriodEndDay: UInt32?
     
-    let offlinePeriodEndHour: UInt32?
-    let offlinePeriodEndMinute: UInt32?
-    let offlinePeriodEndSecond: UInt32?
+    public let offlinePeriodEndHour: UInt32?
+    public let offlinePeriodEndMinute: UInt32?
+    public let offlinePeriodEndSecond: UInt32?
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
@@ -46,26 +47,26 @@ public struct Ticket {
     /// address - юридический адрес компании владельца кассового аппарата
     /// iinOrBinOrg - ИИН или БИН компании владельца кассового аппарата
     /// oked - общий классификатор экономической деятельности компании владельца кассового аппарата
-    let kgdId: String
-    let kkmOfdId: String
-    let kkmSerialNumber: String
+    public let kgdId: String
+    public let kkmOfdId: String
+    public let kkmSerialNumber: String
     
-    let title: String
-    let address: String
-    let iinOrBinOrg: String
-    let oked: String
+    public let title: String
+    public let address: String
+    public let iinOrBinOrg: String
+    public let oked: String
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
     /// НОМЕР СМЕНЫ
     /// Обязательно берем номер смены из Z-отчета, обычно это Номер смены предыдущего закрытого
     /// Z-Отчета + 1
-    let frShiftNumber: UInt32
+    public let frShiftNumber: UInt32
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
     /// Тип операции продажа(2)/возврат продажи(3)/покупка(0)/возврат покупки(1)
-    let operation: UInt
+    public let operation: UInt
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
@@ -73,25 +74,25 @@ public struct Ticket {
     /// год - четыре цифры(например 2024)
     /// месяц - диапазон 1-12
     /// день - диапазон 1-31
-    let year: UInt32
-    let month: UInt32
-    let day: UInt32
+    public let year: UInt32
+    public let month: UInt32
+    public let day: UInt32
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
     /// ВРЕМЯ
     /// часы - диапазон 0-23
     /// минуты и секунды - диапазон 0-59
-    let hour: UInt32
-    let minute: UInt32
-    let second:UInt32
+    public let hour: UInt32
+    public let minute: UInt32
+    public let second:UInt32
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
     /// КАССИР
     /// Кто провел операцию
-    let codeOperator: UInt32
-    let nameOperator: String
+    public let codeOperator: UInt32
+    public let nameOperator: String
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
@@ -101,28 +102,28 @@ public struct Ticket {
     /// billsTaken и coinsTaken - это сумма денег которую покупатель дал продавцу наличкой, если
     /// такая оплата вообще была, если наличными ничего не оплачивали, то не добавляем
     /// billsCashSum и coinsCashSum - какая сумма была оплачена наличными
-    let isCash: Bool
-    let billsCashSum: UInt64?
-    let coinsCashSum: UInt32?
-    let billsCashTaken: UInt64?
-    let coinsCashTaken: UInt32?
+    public let isCash: Bool
+    public let billsCashSum: UInt64?
+    public let coinsCashSum: UInt32?
+    public let billsCashTaken: UInt64?
+    public let coinsCashTaken: UInt32?
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
     /// ПЛАТЕЖ КАРТОЙ
     /// billsCardhSum и coinsCardSum - это сколько покупатель заплатил картой
-    let isCard: Bool
-    let billsCardSum: UInt64?
-    let coinsCardSum: UInt32?
+    public let isCard: Bool
+    public let billsCardSum: UInt64?
+    public let coinsCardSum: UInt32?
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
     /// ПЛАТЕЖ QR КОДОМ
     /// Например если платеж был Kaspi QR или Halyk QR
     /// billsMobileSum и coinsMobileSum - это сколько покупатель заплатил QR платежем
-    let isMobile: Bool
-    let billsMobileSum: UInt64?
-    let coinsMobileSum: UInt32?
+    public let isMobile: Bool
+    public let billsMobileSum: UInt64?
+    public let coinsMobileSum: UInt32?
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
@@ -132,10 +133,10 @@ public struct Ticket {
     /// tax - какой процент НДС. НДС может быть только двух видов, либо 0(0%), либо 12000(12%)
     /// billsTax - это целые тенге
     /// coinsTax - это тиыны указываются до 99
-    let isTicketAllTax: Bool
-    let tax: UInt32?
-    let billsTax: UInt64?
-    let coinsTax: UInt32?
+    public let isTicketAllTax: Bool
+    public let tax: UInt32?
+    public let billsTax: UInt64?
+    public let coinsTax: UInt32?
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
@@ -144,10 +145,10 @@ public struct Ticket {
     /// скиндка есть, то наценку делать нельзя
     /// discountName - можно указать название скидки если есть, например "АКЦИЯ - 10%"\
     /// billsDiscount и coinsDiscount - сумма скидки в деньгах, например 500,00 тенге
-    let isTicketAllDiscount: Bool
-    let discountName: String?
-    let billsDiscount: UInt64?
-    let coinsDiscount: UInt32?
+    public let isTicketAllDiscount: Bool
+    public let discountName: String?
+    public let billsDiscount: UInt64?
+    public let coinsDiscount: UInt32?
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
@@ -155,19 +156,21 @@ public struct Ticket {
     /// Тут нужно заполнить итоговые суммы по чеку
     /// billsTotal и coinsTotal - это общая сумма всего ticket(чека), используется для проверки
     /// внутри библиотеки
-    let billsTotal: UInt64
-    let coinsTotal: UInt32
+    public let billsTotal: UInt64
+    public let coinsTotal: UInt32
     /// -------------------------------------------------------------------------------------------
     
     /// -------------------------------------------------------------------------------------------
     /// ИНФОРМАЦИЯ О ПОКУПАТЕЛЕ
     /// Тут нужно заполнить информацию о покупателе если она указывается
     /// iinOrBin, phone, email - ИИН или БИН, телефон, почтовый ящик покупателя
-    let isCustomer: Bool
-    let iinOrBin: String?
-    let phone: String?
-    let email: String?
+    public let isCustomer: Bool
+    public let iinOrBin: String?
+    public let phone: String?
+    public let email: String?
     /// -------------------------------------------------------------------------------------------
+    
+    public let ticketItems: [TicketItem]
     
     public init(isTicketOnline: Bool,
          offlineTicketNumber: UInt32?,
@@ -198,7 +201,7 @@ public struct Ticket {
          isMobile: Bool, billsMobileSum: UInt64?, coinsMobileSum: UInt32?,
          isTicketAllTax: Bool, tax: UInt32?, billsTax: UInt64?, coinsTax: UInt32?,
          isTicketAllDiscount: Bool, discountName: String?, billsDiscount: UInt64?, coinsDiscount: UInt32?, billsTotal: UInt64, coinsTotal: UInt32,
-         isCustomer: Bool, iinOrBin: String?, phone: String?, email: String?) throws {
+         isCustomer: Bool, iinOrBin: String?, phone: String?, email: String?, ticketItems: [TicketItem]) throws {
         
         self.isTicketOnline = isTicketOnline
         
@@ -382,5 +385,7 @@ public struct Ticket {
             self.phone = nil
             self.email = nil
         }
+        
+        self.ticketItems = ticketItems
     }
 }

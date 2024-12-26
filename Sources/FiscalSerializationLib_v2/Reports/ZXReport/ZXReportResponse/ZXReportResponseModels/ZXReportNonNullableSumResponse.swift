@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 09.12.2024.
 //
 
-public struct ZXReportNonNullableSumResponse: InternalConstructible {
+public struct ZXReportNonNullableSumResponse: InternalConstructible, Encodable {
     public let operation: OperationTypeEnum
     public let sum: Double
     

@@ -7,7 +7,8 @@
 
 protocol ResponseProtocol {
     var ofdName: OFD { get }
-    var kkm: KKM { get }
+    var kkmUserToServer: KKM { get }
+    var kkmServerToUser: KKM { get }
     var command: CommandResponse { get }
     var result: ResultResponse { get }
 }

@@ -18,7 +18,7 @@
 ///   - Получение числового значения: `MoneyPlacementEnum.deposit.rawValue`
 ///   - Получение строкового кода: `MoneyPlacementEnum.withdrawal.placementCode`
 ///   - Получение описания на русском языке: `MoneyPlacementEnum.deposit.description`
-public enum MoneyPlacementEnum: UInt {
+public enum MoneyPlacementEnum: UInt, Encodable {
     /// Внесение денег в кассу
     case deposit = 0
     /// Снятие денег из кассы

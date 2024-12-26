@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 19.11.2024.
 //
 
-public struct KkmRegInfoResponse: InternalConstructible {
+public struct KkmRegInfoResponse: InternalConstructible, Encodable {
     public let kgdId: String
     public let serialNumber: String
     public let kkmOfdId: String

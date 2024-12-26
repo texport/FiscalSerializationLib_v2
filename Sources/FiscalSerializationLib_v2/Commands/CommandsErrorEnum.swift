@@ -12,6 +12,7 @@ public enum CommandsErrorEnum: LocalizedError {
     case commandCodeLibError
     case commandResultCodeError
     case commandResultCodeLibError
+    case commandLengthMessageError
     
     public var code: Int {
         switch self {
@@ -23,6 +24,8 @@ public enum CommandsErrorEnum: LocalizedError {
             return 3
         case .commandResultCodeLibError:
             return 4
+        case .commandLengthMessageError:
+            return 5
         }
     }
     
@@ -36,6 +39,8 @@ public enum CommandsErrorEnum: LocalizedError {
             return "Полученный код ответа от ОФД не соответствует протоколу. Обратитесь в службу поддержки ОФД."
         case .commandResultCodeLibError:
             return "Код ответа от ОФД допустим по протоколу, но не распознан библиотекой. Обратитесь к разработчику библиотеки."
+        case .commandLengthMessageError:
+            return "От сервера ОФД пришло короткое сообщение. Мы не можем его расшифровать. Попробуйте переотправить сообщение которые вы отправляли. Если ошибка повторяется, обратитесь к разработчику библиотеки."
         }
     }
 }

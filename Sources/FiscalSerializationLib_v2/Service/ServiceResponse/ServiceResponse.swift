@@ -99,7 +99,7 @@ class ServiceResponseBuilder {
     }
 }
 
-public struct ServiceResponse: InternalConstructible {
+public struct ServiceResponse: InternalConstructible, Encodable {
     public let regInfoResponse: RegInfoResponse?
     public let ads: [String]?
     
@@ -110,5 +110,27 @@ public struct ServiceResponse: InternalConstructible {
     
     static func create(with data: (regInfoResponse: RegInfoResponse?, ads: [String]?)) -> ServiceResponse {
         ServiceResponse(regInfoResponse: data.0, ads: data.1)
+    }
+    
+    /// Ключи для кодирования данных.
+    private enum CodingKeys: String, CodingKey {
+        case regInfoResponse
+        case ads
+    }
+
+    /// Кодирует объект в заданный `Encoder`.
+    ///
+    /// - Parameter encoder: Объект `Encoder`, предоставленный вызывающей стороной.
+    /// - Throws: Ошибка кодирования, если данные не могут быть закодированы.
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        
+        // Кодируем только непустые значения
+        if let regInfoResponse = regInfoResponse {
+            try container.encode(regInfoResponse, forKey: .regInfoResponse)
+        }
+        if let ads = ads {
+            try container.encode(ads, forKey: .ads)
+        }
     }
 }

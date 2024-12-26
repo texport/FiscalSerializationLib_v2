@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ZXReportTaxOperationResponse: InternalConstructible {
+public struct ZXReportTaxOperationResponse: InternalConstructible, Encodable {
     public let operation: OperationTypeEnum
     public let turnover: Double
     public let turnoverWithoutTax: Double

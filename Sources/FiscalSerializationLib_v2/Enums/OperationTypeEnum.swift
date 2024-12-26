@@ -18,7 +18,7 @@
 ///   - Получение числового значения: `OperationType.buy.rawValue`
 ///   - Получение строкового кода: `OperationType.sell.operationCode`
 ///   - Получение описания на русском языке: `OperationType.buyReturn.description`
-public enum OperationTypeEnum: UInt {
+public enum OperationTypeEnum: UInt, Encodable {
     /// Покупка
     case buy = 0
     /// Возврат покупки

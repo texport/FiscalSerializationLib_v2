@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 11.12.2024.
 //
 
-public struct ZXReportRevenueResponse: InternalConstructible {
+public struct ZXReportRevenueResponse: InternalConstructible, Encodable {
     public let sum: Double
     public let isNegative: Bool
     

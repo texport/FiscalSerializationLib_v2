@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 19.11.2024.
 //
 
-public struct RegInfoResponse: InternalConstructible {
+public struct RegInfoResponse: InternalConstructible, Encodable {
     public let kkm: KkmRegInfoResponse
     public let pos: PosRegInfoResponse
     public let org: OrgRegInfoResponse

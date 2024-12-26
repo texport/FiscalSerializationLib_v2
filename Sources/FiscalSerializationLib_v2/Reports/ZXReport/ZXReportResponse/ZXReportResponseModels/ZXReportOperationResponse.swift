@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ZXReportOperationResponse: InternalConstructible {
+public struct ZXReportOperationResponse: InternalConstructible, Encodable {
     public let operation: OperationTypeEnum
     public let count: UInt32
     public let sum: Double

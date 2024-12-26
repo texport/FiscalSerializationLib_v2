@@ -1,34 +1,8 @@
-//
-//  CommandTicket.swift
-//  FiscalSerializationLib_v2
-//
-//  Created by Sergey Ivanov on 21.10.2024.
-//
-
 import Foundation
 
-/// `CommandTicketRequest` - класс-конфигуратор для создания и сериализации фискальных чеков.
-/// Этот класс обеспечивает правильную настройку и сбор данных для фискальных чеков, включая операции с товарами,
-/// налоги, скидки, а также генерацию и сериализацию данных в формате, необходимом для отправки на сервер.
-///
-/// Основные задачи класса:
-/// - Настройка параметров чека, включая дату, время, тип операции, список товаров и оплат.
-/// - Генерация и сериализация данных чека в формате `Data`.
-/// - Обработка ошибок и проверка корректности данных.
-///
-/// ### Пример использования:
-/// ```swift
-/// do {
-///     let serializedData = try CommandTicketRequest.createCommandTicketRequestCpcr(ticket: myTicket, ticketItems: myTicketItems)
-///     // Отправка serializedData на сервер
-/// } catch {
-///     print("Ошибка при создании чека: \(error)")
-/// }
-/// ```
-final class CommandTicketRequest {
-    
+final class CommandTicketRequestBuilder {
     // MARK: - Свойства
-    private let ticket: Ticket
+    private let ticket: CommandTicketRequest
     private let ticketItems: [TicketItem]
     private var ticketCpcr = Kkm_Proto_TicketRequest()
     private var ticketServiceRequest = Kkm_Proto_ServiceRequest()
@@ -53,9 +27,9 @@ final class CommandTicketRequest {
     ///   - ticket: Основная информация о чеке.
     ///   - ticketItems: Список позиций товаров.
     /// - Throws: Генерирует ошибку, если данные чека или товаров некорректны.
-    private init(ticket: Ticket, ticketItems: [TicketItem]) throws {
+    private init(ticket: CommandTicketRequest) throws {
         self.ticket = ticket
-        self.ticketItems = ticketItems
+        self.ticketItems = ticket.ticketItems
         self.isOnline = ticket.isTicketOnline
         self.isTaxAllTicket = ticket.isTicketAllTax
         self.isDiscountAllTicket = ticket.isTicketAllDiscount
@@ -72,8 +46,8 @@ final class CommandTicketRequest {
     ///   - ticketItems: Список позиций товаров.
     /// - Returns: Сериализованные данные чека.
     /// - Throws: Генерирует ошибку, если данные чека некорректны.
-    public static func createCommandTicketRequestCpcr(ticket: Ticket, ticketItems: [TicketItem]) throws -> Data {
-        let commandTicketRequest = try CommandTicketRequest(ticket: ticket, ticketItems: ticketItems)
+    public static func createCommandTicketRequestCpcr(ticket: CommandTicketRequest) throws -> Data {
+        let commandTicketRequest = try CommandTicketRequestBuilder(ticket: ticket)
         return try commandTicketRequest.serializeCommandTicketRequest()
     }
     

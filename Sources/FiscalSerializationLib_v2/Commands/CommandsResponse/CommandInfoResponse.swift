@@ -18,9 +18,9 @@ public struct CommandInfoResponse: InternalConstructible, ResponseProtocol {
     public let service: ServiceResponse
     
     /// Часть с отчетом от сервера ОФД
-    public let report: ZXReportResponse
+    public let report: ZXReportResponse?
     
-    private init(ofdName: OFD, kkmUserToServer: KKM, kkmServerToUser: KKM, command: CommandResponse, result: ResultResponse, service: ServiceResponse, report: ZXReportResponse) {
+    private init(ofdName: OFD, kkmUserToServer: KKM, kkmServerToUser: KKM, command: CommandResponse, result: ResultResponse, service: ServiceResponse, report: ZXReportResponse?) {
         self.ofdName = ofdName
         self.kkmUserToServer = kkmUserToServer
         self.kkmServerToUser = kkmServerToUser
@@ -30,7 +30,7 @@ public struct CommandInfoResponse: InternalConstructible, ResponseProtocol {
         self.report = report
     }
     
-    static func create(with data: (ofdName: OFD, kkmUserToServer: KKM, kkmServerToUser: KKM, command: CommandResponse, result: ResultResponse, service: ServiceResponse, report: ZXReportResponse)) -> CommandInfoResponse {
+    static func create(with data: (ofdName: OFD, kkmUserToServer: KKM, kkmServerToUser: KKM, command: CommandResponse, result: ResultResponse, service: ServiceResponse, report: ZXReportResponse?)) -> CommandInfoResponse {
         CommandInfoResponse(ofdName: data.0, kkmUserToServer: data.1, kkmServerToUser: data.2, command: data.3, result: data.4, service: data.5, report: data.6)
     }
 }

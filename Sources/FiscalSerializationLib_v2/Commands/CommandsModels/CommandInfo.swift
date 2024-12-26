@@ -11,6 +11,7 @@ struct CommandInfo {
     }
     
     static func createCommandInfoResponse(ofd: OFD, kkmUserToServer: KKM, commandInfoResponseData: Data) throws -> CommandInfoResponse {
+        var zXReportResponse: ZXReportResponse?
         /// Создаем сущность ККМ которую прислал нам сервер ОФД
         let kkmServerToUser = try MessageHeader.fromData(commandInfoResponseData).toKKM()
         
@@ -27,7 +28,9 @@ struct CommandInfo {
         let serviceResponse = try ServiceResponseBuilder.createServiceResponse(from: deserializePayloadCommandInfoCpcr.service)
         
         // часть по отчетам от сервера ОФД
-        let zXReportResponse = try ZXReportResponseBuilder.createZXReportResponse(from: deserializePayloadCommandInfoCpcr.report.zxReport)
+        if deserializePayloadCommandInfoCpcr.hasReport {
+            zXReportResponse = try ZXReportResponseBuilder.createZXReportResponse(from: deserializePayloadCommandInfoCpcr.report.zxReport)
+        }
         
         return CommandInfoResponse.create(with: (ofd, kkmUserToServer, kkmServerToUser, command, result, serviceResponse, zXReportResponse))
     }

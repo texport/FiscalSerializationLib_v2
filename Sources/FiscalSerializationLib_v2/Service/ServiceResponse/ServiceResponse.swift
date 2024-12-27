@@ -7,99 +7,7 @@
 
 import Foundation
 
-/// Класс `ServiceResponse` обрабатывает ответ от сервера оператора фискальных данных (ОФД).
-///
-/// Класс преобразует данные из ответа протокола `Kkm_Proto_ServiceResponse` в удобный формат, включая:
-/// - Рекламные тексты (`ads`)
-/// - Регистрационную информацию (`RegInfo`)
-///
-/// ### Основные задачи:
-/// - Проверка наличия обязательных данных в ответе.
-/// - Настройка рекламных текстов.
-/// - Настройка регистрационной информации, если она присутствует.
-///
-/// ### Особенности:
-/// Если ответ содержит данные, но они не соответствуют требованиям протокола, выбрасывается `NSError`.
-class ServiceResponseBuilder {
-    
-    /// Сырой ответ от ОФД.
-    private let serviceResponse: Kkm_Proto_ServiceResponse
-    
-    /// Рекламные тексты, возвращённые ОФД. Может быть пустым массивом, если данных нет.
-    private var ads: [String]?
-    
-    /// Регистрационная информация о кассе, торговой точке и организации. Может быть `nil`, если данные отсутствуют.
-    private var kkm: RegInfoResponse?
-    
-    /// Инициализирует объект на основе ответа от ОФД.
-    ///
-    /// - Parameter serviceResponse: Объект ответа `Kkm_Proto_ServiceResponse`.
-    /// - Throws: Ошибка, если данные некорректны или отсутствуют обязательные поля.
-    private init(serviceResponse: Kkm_Proto_ServiceResponse) throws {
-        self.serviceResponse = serviceResponse
-        //try setupServiceResponse()
-    }
-    
-    static func createServiceResponse(from serviceResponseCpcr: Kkm_Proto_ServiceResponse) throws -> ServiceResponse {
-        let builder = try ServiceResponseBuilder(serviceResponse: serviceResponseCpcr)
-        return try builder.setupServiceResponse()
-    }
-    
-    /// Настраивает данные из ответа сервера.
-    ///
-    /// Вызывает методы настройки рекламных текстов и регистрационной информации.
-    /// Если регистрационная информация отсутствует, она не будет установлена.
-    ///
-    /// - Throws: Ошибка, если данные некорректны.
-    private func setupServiceResponse() throws -> ServiceResponse {
-        try setupAdsResponse()
-        
-        // TODO: Считаю что это временное решение, ОФД работает с багами, ОФД в случае если передает сервисную часть всегда должен передавать RegInfo
-        if serviceResponse.hasRegInfo {
-            try setupRegInfoResponse()
-        }
-        
-        return ServiceResponse.create(with: (kkm, ads))
-    }
-    
-    // MARK: Рекламные тексты
-    
-    /// Настраивает рекламные тексты из ответа.
-    ///
-    /// Проверяет наличие массива рекламных текстов. Если массив присутствует, преобразует его в массив строк.
-    /// Если массив отсутствует, оставляет `ads` пустым.
-    ///
-    /// - Throws: Ошибка, если данные некорректны.
-    private func setupAdsResponse() throws {
-        let adsResponseCpcr = serviceResponse.ticketAds
-        
-        if adsResponseCpcr.count >= 1 {
-            ads = createAdsResponse(adsResponseCpcr: adsResponseCpcr)
-        }
-    }
-    
-    /// Преобразует массив объектов `Kkm_Proto_TicketAd` в массив строк.
-    ///
-    /// - Parameter adsResponseCpcr: Массив рекламных текстов в формате протокола.
-    /// - Returns: Массив строк.
-    private func createAdsResponse(adsResponseCpcr: [Kkm_Proto_TicketAd]) -> [String] {
-        return adsResponseCpcr.map { $0.text }
-    }
-    
-    // MARK: Информация о ККМ (RegInfo)
-    
-    /// Настраивает регистрационную информацию о кассе, торговой точке и организации.
-    ///
-    /// Проверяет наличие данных и преобразует их в объект `RegInfoResponse`.
-    ///
-    /// - Throws: Ошибка, если данные некорректны.
-    private func setupRegInfoResponse() throws {
-        let regInfoResponseCpcr = serviceResponse.regInfo
-        kkm = try RegInfo.createRegInfoResponse(regInfoResponse: regInfoResponseCpcr)
-    }
-}
-
-public struct ServiceResponse: InternalConstructible, Encodable {
+public struct ServiceResponse: InternalConstructible {
     public let regInfoResponse: RegInfoResponse?
     public let ads: [String]?
     
@@ -110,27 +18,5 @@ public struct ServiceResponse: InternalConstructible, Encodable {
     
     static func create(with data: (regInfoResponse: RegInfoResponse?, ads: [String]?)) -> ServiceResponse {
         ServiceResponse(regInfoResponse: data.0, ads: data.1)
-    }
-    
-    /// Ключи для кодирования данных.
-    private enum CodingKeys: String, CodingKey {
-        case regInfoResponse
-        case ads
-    }
-
-    /// Кодирует объект в заданный `Encoder`.
-    ///
-    /// - Parameter encoder: Объект `Encoder`, предоставленный вызывающей стороной.
-    /// - Throws: Ошибка кодирования, если данные не могут быть закодированы.
-    public func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        
-        // Кодируем только непустые значения
-        if let regInfoResponse = regInfoResponse {
-            try container.encode(regInfoResponse, forKey: .regInfoResponse)
-        }
-        if let ads = ads {
-            try container.encode(ads, forKey: .ads)
-        }
     }
 }

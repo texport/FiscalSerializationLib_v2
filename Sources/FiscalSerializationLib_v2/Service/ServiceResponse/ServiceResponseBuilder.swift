@@ -1,0 +1,85 @@
+//
+//  ServiceResponseBuilder.swift
+//  FiscalSerializationLib_v2
+//
+//  Created by Sergey Ivanov on 27.12.2024.
+//
+
+class ServiceResponseBuilder {
+    
+    /// Сырой ответ от ОФД.
+    private let serviceResponse: Kkm_Proto_ServiceResponse
+    
+    /// Рекламные тексты, возвращённые ОФД. Может быть пустым массивом, если данных нет.
+    private var ads: [String]?
+    
+    /// Регистрационная информация о кассе, торговой точке и организации. Может быть `nil`, если данные отсутствуют.
+    private var kkm: RegInfoResponse?
+    
+    /// Инициализирует объект на основе ответа от ОФД.
+    ///
+    /// - Parameter serviceResponse: Объект ответа `Kkm_Proto_ServiceResponse`.
+    /// - Throws: Ошибка, если данные некорректны или отсутствуют обязательные поля.
+    private init(serviceResponse: Kkm_Proto_ServiceResponse) throws {
+        self.serviceResponse = serviceResponse
+        //try setupServiceResponse()
+    }
+    
+    static func createServiceResponse(from serviceResponseCpcr: Kkm_Proto_ServiceResponse) throws -> ServiceResponse {
+        let builder = try ServiceResponseBuilder(serviceResponse: serviceResponseCpcr)
+        return try builder.setupServiceResponse()
+    }
+    
+    /// Настраивает данные из ответа сервера.
+    ///
+    /// Вызывает методы настройки рекламных текстов и регистрационной информации.
+    /// Если регистрационная информация отсутствует, она не будет установлена.
+    ///
+    /// - Throws: Ошибка, если данные некорректны.
+    private func setupServiceResponse() throws -> ServiceResponse {
+        try setupAdsResponse()
+        
+        // TODO: Считаю что это временное решение, ОФД работает с багами, ОФД в случае если передает сервисную часть всегда должен передавать RegInfo
+        if serviceResponse.hasRegInfo {
+            try setupRegInfoResponse()
+        }
+        
+        return ServiceResponse.create(with: (kkm, ads))
+    }
+    
+    // MARK: Рекламные тексты
+    
+    /// Настраивает рекламные тексты из ответа.
+    ///
+    /// Проверяет наличие массива рекламных текстов. Если массив присутствует, преобразует его в массив строк.
+    /// Если массив отсутствует, оставляет `ads` пустым.
+    ///
+    /// - Throws: Ошибка, если данные некорректны.
+    private func setupAdsResponse() throws {
+        let adsResponseCpcr = serviceResponse.ticketAds
+        
+        if adsResponseCpcr.count >= 1 {
+            ads = createAdsResponse(adsResponseCpcr: adsResponseCpcr)
+        }
+    }
+    
+    /// Преобразует массив объектов `Kkm_Proto_TicketAd` в массив строк.
+    ///
+    /// - Parameter adsResponseCpcr: Массив рекламных текстов в формате протокола.
+    /// - Returns: Массив строк.
+    private func createAdsResponse(adsResponseCpcr: [Kkm_Proto_TicketAd]) -> [String] {
+        return adsResponseCpcr.map { $0.text }
+    }
+    
+    // MARK: Информация о ККМ (RegInfo)
+    
+    /// Настраивает регистрационную информацию о кассе, торговой точке и организации.
+    ///
+    /// Проверяет наличие данных и преобразует их в объект `RegInfoResponse`.
+    ///
+    /// - Throws: Ошибка, если данные некорректны.
+    private func setupRegInfoResponse() throws {
+        let regInfoResponseCpcr = serviceResponse.regInfo
+        kkm = try RegInfo.createRegInfoResponse(regInfoResponse: regInfoResponseCpcr)
+    }
+}

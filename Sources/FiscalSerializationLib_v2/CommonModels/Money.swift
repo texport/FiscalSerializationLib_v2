@@ -12,6 +12,29 @@ import Foundation
 /// гарантируя, что передаваемые значения корректны.
 struct Money {
     
+    /// Создает объект `Kkm_Proto_Money` из значения типа `Double`
+    /// - Parameter value: Денежная сумма в формате "тенге.тиыны"
+    /// - Throws: Генерирует ошибку, если дробная часть значения превышает 99 копеек
+    /// - Returns: Объект `Kkm_Proto_Money` с разделенными целыми и дробными частями
+    static func fromDouble(value: Double) throws -> Kkm_Proto_Money {
+        guard value >= 0 else {
+            throw NSError(domain: "fromDouble", code: 1, userInfo: [NSLocalizedDescriptionKey: "Сумма не может быть отрицательной."])
+        }
+        
+        let bills = UInt64(value)
+        let fractionalPart = value - Double(bills)
+        let coins = UInt32(round(fractionalPart * 100))
+        
+        guard coins < 100 else {
+            throw NSError(domain: "fromDouble", code: 2, userInfo: [NSLocalizedDescriptionKey: "Дробная часть суммы не может превышать 99 копеек."])
+        }
+        
+        var money = Kkm_Proto_Money()
+        money.bills = bills
+        money.coins = coins
+        return money
+    }
+
     /// Преобразует объект `Kkm_Proto_Money` в значение типа `Double`
     /// - Parameter protoMoney: Объект `Kkm_Proto_Money`
     /// - Returns: Значение в формате "тенге.тиыны" с двумя знаками после запятой

@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ZXReportMoneyPlacementResponse: InternalConstructible {
+public struct ZXReportMoneyPlacementResponse: InternalConstructible, Encodable {
     public let operation: MoneyPlacementEnum
     public let operationsTotalCount: UInt32
     public let operationsCount: UInt32

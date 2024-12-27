@@ -64,7 +64,7 @@ struct MessageHeader {
     static func fromData(_ data: Data) throws -> MessageHeader {
         // Проверяем, что длина данных соответствует размеру заголовка (18 байт)
         guard data.count >= 18 else {
-            throw NSError(domain: "MessageHeaderError", code: 1, userInfo: [NSLocalizedDescriptionKey: "Неверный размер данных для заголовка"])
+            throw CommonModelsError.headerSizeError
         }
         
         var offset = 0
@@ -88,5 +88,13 @@ struct MessageHeader {
         let reqNum = data.subdata(in: offset..<offset+2).withUnsafeBytes { $0.load(as: UInt16.self) }.littleEndian
         
         return MessageHeader(appCode: appCode, version: version, size: size, id: id, token: token, reqNum: reqNum)
+    }
+    
+    func toKKM() -> KKM {
+        KKM(idKkm: id, tokenKkm: token, reqNum: reqNum, kgdId: nil, kkmSerialNumber: nil)
+    }
+    
+    func toKKMForKGD(kgdId: String, kkmSerialNumber: String) -> KKM {
+        KKM(idKkm: id, tokenKkm: token, reqNum: reqNum, kgdId: kgdId, kkmSerialNumber: kkmSerialNumber)
     }
 }

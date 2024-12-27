@@ -18,7 +18,7 @@
 ///   - Получение числового значения: `PaymentTypeEnum.cash.rawValue`
 ///   - Получение строкового кода: `PaymentTypeEnum.card.paymentCode`
 ///   - Получение описания на русском языке: `PaymentTypeEnum.mobile.description`
-public enum PaymentTypeEnum: UInt {
+public enum PaymentTypeEnum: UInt, Encodable {
     /// Наличные
     case cash = 0
     /// Банковская карта

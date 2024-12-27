@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ZXReportTaxResponse: InternalConstructible {
+public struct ZXReportTaxResponse: InternalConstructible, Encodable {
     public let percent: UInt32
     public let operations: [ZXReportTaxOperationResponse]
     

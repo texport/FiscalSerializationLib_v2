@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 10.12.2024.
 //
 
-public struct ZXReportTicketOperationResponse: InternalConstructible {
+public struct ZXReportTicketOperationResponse: InternalConstructible, Encodable {
     public let operation: OperationTypeEnum
     public let ticketsTotalCount: UInt32
     public let ticketsCount: UInt32

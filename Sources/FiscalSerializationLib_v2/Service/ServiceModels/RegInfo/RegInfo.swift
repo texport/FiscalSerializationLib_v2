@@ -119,7 +119,7 @@ struct RegInfo {
         // Обрабатываем информацию об организации
         let org = try setupOrgRegInfoResponse(regInfoResponse: regInfoResponse)
         
-        return RegInfoResponse(kkm: kkm, pos: pos, org: org)
+        return RegInfoResponse.create(with: (kkm, pos, org))
     }
     
     /// Обрабатывает регистрационную информацию о кассовом аппарате (`KkmRegInfo`).

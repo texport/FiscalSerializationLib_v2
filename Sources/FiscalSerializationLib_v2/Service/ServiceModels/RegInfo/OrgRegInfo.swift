@@ -134,11 +134,9 @@ struct OrgRegInfo {
             )
         }
         
-        return OrgRegInfoResponse(
-            title: orgRegInfoResponse.title,
-            address: orgRegInfoResponse.address,
-            iinOrBin: orgRegInfoResponse.inn,
-            oked: orgRegInfoResponse.okved
-        )
+        return OrgRegInfoResponse.create(with: (title: orgRegInfoResponse.title,
+                                                address: orgRegInfoResponse.address,
+                                                iinOrBin: orgRegInfoResponse.inn,
+                                                oked: orgRegInfoResponse.okved))
     }
 }

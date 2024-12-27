@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct ZXReportSectionResponse: InternalConstructible {
+public struct ZXReportSectionResponse: InternalConstructible, Encodable {
     public let section: String
     public let operations: [ZXReportOperationResponse]
     

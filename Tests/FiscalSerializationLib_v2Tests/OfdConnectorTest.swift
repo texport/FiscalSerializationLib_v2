@@ -10,7 +10,7 @@ import XCTest
 
 class OfdConnectorTests: XCTestCase {
     // 1. Создаем сущность кассы для которой будем потправлять команду
-    let kkm = KKM(idKkm: 201129, tokenKkm: 4165121003, reqNum: 11, kgdId: "620500001720", kkmSerialNumber: "KTCD1123342507572")
+    let kkm = KKM(idKkm: 201129, tokenKkm: 63568596, reqNum: 11, kgdId: "620500001720", kkmSerialNumber: "KTCD1123342507572")
     // 2. Создаем сущность ОФД куда будем отправлять
     let ofd = OfdEnum.kazakhtelecom.getPlatformInfo(for: .test)
     

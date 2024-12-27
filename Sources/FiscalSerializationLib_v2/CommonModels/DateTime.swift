@@ -147,4 +147,76 @@ struct DateTime {
         
         return date
     }
+    
+    /// Преобразует строку даты в формате `dd.MM.yyyy HH:mm:ss` в протокольный объект `Kkm_Proto_DateTime`
+    /// - Parameter dateString: Строка даты в формате `dd.MM.yyyy HH:mm:ss`
+    /// - Throws: Генерирует ошибку, если строка не соответствует формату или дата некорректна
+    /// - Returns: Протокольный объект `Kkm_Proto_DateTime`
+    static func createProtoDateTime(from dateString: String) throws -> Kkm_Proto_DateTime {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "dd.MM.yyyy HH:mm:ss"
+        dateFormatter.locale = Locale(identifier: "en_US_POSIX")
+        
+        // Преобразование строки в Date
+        guard let swiftDate = dateFormatter.date(from: dateString) else {
+            throw NSError(
+                domain: "InvalidDateFormat",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "Дата должна быть в формате dd.MM.yyyy HH:mm:ss."]
+            )
+        }
+        
+        let calendar = Calendar.current
+        let currentDate = Date()
+        
+        // Проверка, что дата не из будущего
+        guard swiftDate <= currentDate else {
+            throw NSError(
+                domain: "InvalidDateTime",
+                code: 2,
+                userInfo: [NSLocalizedDescriptionKey: "Дата не может быть из будущего."]
+            )
+        }
+        
+        // Проверка, что дата не старше 5 лет
+        guard let fiveYearsAgo = calendar.date(byAdding: .year, value: -5, to: currentDate), swiftDate >= fiveYearsAgo else {
+            throw NSError(
+                domain: "InvalidDateTime",
+                code: 3,
+                userInfo: [NSLocalizedDescriptionKey: "Дата должна быть в пределах последних 5 лет."]
+            )
+        }
+        
+        let components = calendar.dateComponents([.year, .month, .day, .hour, .minute, .second], from: swiftDate)
+        
+        // Проверка валидности компонентов
+        guard let year = components.year, year > 0,
+              let month = components.month, (1...12).contains(month),
+              let day = components.day, (1...31).contains(day),
+              let hour = components.hour, (0...23).contains(hour),
+              let minute = components.minute, (0...59).contains(minute),
+              let second = components.second, (0...59).contains(second) else {
+            throw NSError(
+                domain: "InvalidDateTime",
+                code: 4,
+                userInfo: [NSLocalizedDescriptionKey: "Некорректные значения даты или времени."]
+            )
+        }
+        
+        var protoDate = Kkm_Proto_Date()
+        protoDate.year = UInt32(year)
+        protoDate.month = UInt32(month)
+        protoDate.day = UInt32(day)
+        
+        var protoTime = Kkm_Proto_Time()
+        protoTime.hour = UInt32(hour)
+        protoTime.minute = UInt32(minute)
+        protoTime.second = UInt32(second)
+        
+        var protoDateTime = Kkm_Proto_DateTime()
+        protoDateTime.date = protoDate
+        protoDateTime.time = protoTime
+        
+        return protoDateTime
+    }
 }

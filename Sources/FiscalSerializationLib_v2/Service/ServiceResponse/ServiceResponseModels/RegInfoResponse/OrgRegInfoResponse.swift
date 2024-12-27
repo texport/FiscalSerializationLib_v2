@@ -5,7 +5,7 @@
 //  Created by Sergey Ivanov on 19.11.2024.
 //
 
-public struct OrgRegInfoResponse: InternalConstructible, Encodable {
+public struct OrgRegInfoResponse: InternalConstructible {
     public let title: String
     public let address: String
     public let iinOrBin: String

@@ -10,9 +10,30 @@ import XCTest
 
 class OfdConnectorTests: XCTestCase {
     // 1. Создаем сущность кассы для которой будем потправлять команду
-    let kkm = KKM(idKkm: 201129, tokenKkm: 63568596, reqNum: 11, kgdId: "620500001720", kkmSerialNumber: "KTCD1123342507572")
+    let kkm = KKM(idKkm: 201129, tokenKkm: 63568596, reqNum: 12, kgdId: "620500001720", kkmSerialNumber: "KTCD1123342507572")
     // 2. Создаем сущность ОФД куда будем отправлять
     let ofd = OfdEnum.kazakhtelecom.getPlatformInfo(for: .test)
+    
+    func testSendCommandSystemToOfd() {
+        // Создаём команду
+        let command = CommandSystemRequest()
+        do {
+            // Отправляем команду и получаем ответ
+            let dealer = try Dealer.makeDelivery(command: command, ofd: ofd, kkm: kkm)
+            let commandSystemResponse = dealer as! CommandSystemResponse
+            
+            // Отладочный вывод структуры в читаемом виде
+            print("--------------------------------------")
+            print("Это результат в формате читаемого вывода:")
+            print("--------------------------------------")
+            printReadable(commandSystemResponse)
+            
+            // Проверка, что значение command совпадает с ожидаемым
+            XCTAssert(commandSystemResponse.command.command == 0, "Поле 'command' не содержит ожидаемое значение")
+        } catch {
+            XCTFail("Ошибка при отправке данных в ОФД: \(error)")
+        }
+    }
     
     func testSendCommandInfoToOfd() {
         // Создаём команду
@@ -107,6 +128,41 @@ class OfdConnectorTests: XCTestCase {
         }
     }
 
+    func testSendCommandMoneyPlacement() {
+        var commandMoneyPlacement: CommandMoneyPlacementRequest?
+        
+        do {
+            commandMoneyPlacement = CommandMoneyPlacementRequest(dateTime: "27.12.2024 15:38:11", operation: MoneyPlacementEnum.deposit, sum: 20000.0, isOffline: true, shiftNumber: 50, operatorCode: 12344321, operatorName: "Сергей Иванов")
+        } catch {
+            XCTFail("Ошибка при создании commandMoneyPlacement: \(error)")
+        }
+        
+        do {
+            guard let commandMoneyPlacementRequest = commandMoneyPlacement else {
+                XCTFail("Не удалось извлечь commandMoneyPlacement")
+                return
+            }
+            // Отправляем команду и получаем ответ
+            let dealer = try Dealer.makeDelivery(command: commandMoneyPlacementRequest, ofd: ofd, kkm: kkm)
+            
+            guard let commandMoneyPlacementResponse = dealer as? CommandMoneyPlacementResponse else {
+                XCTFail("Не удалось привести dealer к типу CommandMoneyPlacementResponse")
+                return
+            }
+            
+            // Отладочный вывод структуры в читаемом виде
+            print("--------------------------------------")
+            print("Это результат в формате читаемого вывода:")
+            print("--------------------------------------")
+            printReadable(commandMoneyPlacementResponse)
+            
+            // Проверка, что значение command совпадает с ожидаемым
+            XCTAssert(commandMoneyPlacementResponse.command.command == 6, "Поле 'command' не содержит ожидаемое значение")
+        } catch {
+            XCTFail("Ошибка при отправке данных в ОФД: \(error)")
+        }
+    }
+    
     func printReadable<T>(_ object: T, name: String = "Объект", indent: Int = 0) {
         let mirror = Mirror(reflecting: object)
         let indentation = String(repeating: " ", count: indent)
